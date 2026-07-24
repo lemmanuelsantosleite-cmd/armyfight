@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { data, hydrated, canAccessBelt, isMestre, profile } = useAfc();
+  const { data, hydrated, canAccessBelt } = useAfc();
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [search, setSearch] = useState("");
