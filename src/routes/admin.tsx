@@ -135,7 +135,7 @@ function AdminPage() {
                   { k: "mensalidades", label: "Mensalidades", icon: <DollarSign size={14} /> },
                   { k: "presencas", label: "Presença", icon: <UserCheck size={14} /> },
                   { k: "exames", label: "Exames", icon: <CalendarCheck size={14} /> },
-                ] as { k: Tab; label: string; icon: JSX.Element }[]
+                ] as { k: Tab; label: string; icon: React.ReactNode }[]
               ).map((t) => {
                 const active = tab === t.k;
                 return (
