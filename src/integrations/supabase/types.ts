@@ -14,16 +14,272 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      exames: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          data_exame: string
+          faixa_atual: string
+          faixa_proxima: string
+          id: string
+          observacao: string | null
+          status: Database["public"]["Enums"]["exame_status"]
+          updated_at: string
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          data_exame: string
+          faixa_atual: string
+          faixa_proxima: string
+          id?: string
+          observacao?: string | null
+          status?: Database["public"]["Enums"]["exame_status"]
+          updated_at?: string
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          data_exame?: string
+          faixa_atual?: string
+          faixa_proxima?: string
+          id?: string
+          observacao?: string | null
+          status?: Database["public"]["Enums"]["exame_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exames_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mensalidades: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          id: string
+          observacao: string | null
+          pago_em: string | null
+          status: Database["public"]["Enums"]["mensalidade_status"]
+          updated_at: string
+          valor: number
+          vencimento: string
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          pago_em?: string | null
+          status?: Database["public"]["Enums"]["mensalidade_status"]
+          updated_at?: string
+          valor: number
+          vencimento: string
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          pago_em?: string | null
+          status?: Database["public"]["Enums"]["mensalidade_status"]
+          updated_at?: string
+          valor?: number
+          vencimento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensalidades_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presencas: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          data: string
+          id: string
+          observacao: string | null
+          presente: boolean
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          data: string
+          id?: string
+          observacao?: string | null
+          presente?: boolean
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          data?: string
+          id?: string
+          observacao?: string | null
+          presente?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presencas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          bloqueado_inadimplencia: boolean
+          created_at: string
+          data_matricula: string
+          data_nascimento: string | null
+          email: string
+          faixa_id: string
+          foto_url: string | null
+          id: string
+          nome: string
+          status: Database["public"]["Enums"]["aluno_status"]
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          bloqueado_inadimplencia?: boolean
+          created_at?: string
+          data_matricula?: string
+          data_nascimento?: string | null
+          email: string
+          faixa_id?: string
+          foto_url?: string | null
+          id: string
+          nome: string
+          status?: Database["public"]["Enums"]["aluno_status"]
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bloqueado_inadimplencia?: boolean
+          created_at?: string
+          data_matricula?: string
+          data_nascimento?: string | null
+          email?: string
+          faixa_id?: string
+          foto_url?: string | null
+          id?: string
+          nome?: string
+          status?: Database["public"]["Enums"]["aluno_status"]
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      techniques: {
+        Row: {
+          belt_id: string
+          categoria: Database["public"]["Enums"]["tecnica_categoria"]
+          created_at: string
+          descricao: string
+          id: string
+          imagem_url: string
+          posicao: number
+          titulo: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          belt_id: string
+          categoria: Database["public"]["Enums"]["tecnica_categoria"]
+          created_at?: string
+          descricao?: string
+          id?: string
+          imagem_url?: string
+          posicao?: number
+          titulo: string
+          updated_at?: string
+          video_url?: string
+        }
+        Update: {
+          belt_id?: string
+          categoria?: Database["public"]["Enums"]["tecnica_categoria"]
+          created_at?: string
+          descricao?: string
+          id?: string
+          imagem_url?: string
+          posicao?: number
+          titulo?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_mestre: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      aluno_status: "pendente" | "aprovado" | "bloqueado"
+      app_role: "mestre" | "aluno"
+      exame_status: "agendado" | "aprovado" | "reprovado" | "cancelado"
+      mensalidade_status: "pendente" | "pago" | "atrasado"
+      tecnica_categoria: "defesas" | "socos" | "chutes" | "quedas"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +406,12 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      aluno_status: ["pendente", "aprovado", "bloqueado"],
+      app_role: ["mestre", "aluno"],
+      exame_status: ["agendado", "aprovado", "reprovado", "cancelado"],
+      mensalidade_status: ["pendente", "pago", "atrasado"],
+      tecnica_categoria: ["defesas", "socos", "chutes", "quedas"],
+    },
   },
 } as const
