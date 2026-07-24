@@ -1,22 +1,20 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Search, ShieldCheck, User, LogOut, Lock, Settings } from "lucide-react";
+import { Menu, Search, ShieldCheck, User, LogOut, Settings, ClipboardList } from "lucide-react";
 import { COLORS, camoStyle, useAfc } from "@/lib/afc";
 import { Button } from "@/components/afc-ui";
 
 export function Header({
   onMenu,
-  onLoginClick,
   onSettingsClick,
   search,
   setSearch,
 }: {
   onMenu: () => void;
-  onLoginClick: () => void;
-  onSettingsClick: () => void;
+  onSettingsClick?: () => void;
   search: string;
   setSearch: (v: string) => void;
 }) {
-  const { isAdmin, admin, logout } = useAfc();
+  const { isMestre, profile, signOut } = useAfc();
   return (
     <header
       className="sticky top-0 z-40 border-b"
@@ -65,36 +63,41 @@ export function Header({
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3 justify-end">
-          {isAdmin ? (
-            <>
-              <div
-                className="hidden sm:flex items-center gap-2 text-sm px-2 py-1 rounded-sm"
-                style={{ border: `1px solid ${COLORS.line}` }}
+          {profile && (
+            <div
+              className="hidden sm:flex items-center gap-2 text-sm px-2 py-1 rounded-sm"
+              style={{ border: `1px solid ${COLORS.line}` }}
+            >
+              <User size={14} color={COLORS.brass} />
+              <span
+                className="uppercase tracking-wide truncate max-w-[160px]"
+                style={{ color: COLORS.brass, fontFamily: "'Oswald', sans-serif" }}
               >
-                <User size={14} color={COLORS.brass} />
-                <span
-                  className="uppercase tracking-wide"
-                  style={{ color: COLORS.brass, fontFamily: "'Oswald', sans-serif" }}
-                >
-                  {admin.name}
-                </span>
-              </div>
-              <button
-                onClick={onSettingsClick}
-                title="Configurações"
-                className="hover:brightness-125 p-1"
-              >
-                <Settings size={18} color={COLORS.paperDim} />
-              </button>
-              <Button variant="ghost" onClick={logout} title="Sair">
-                <LogOut size={14} /> <span className="hidden sm:inline">Sair</span>
-              </Button>
-            </>
-          ) : (
-            <Button variant="brass" onClick={onLoginClick}>
-              <Lock size={14} /> <span className="hidden sm:inline">Admin</span>
-            </Button>
+                {isMestre ? `Mestre ${profile.nome}` : profile.nome}
+              </span>
+            </div>
           )}
+          {isMestre && (
+            <Link
+              to="/admin"
+              title="Painel do Mestre"
+              className="hover:brightness-125 p-1"
+            >
+              <ClipboardList size={18} color={COLORS.brass} />
+            </Link>
+          )}
+          {onSettingsClick && (
+            <button
+              onClick={onSettingsClick}
+              title="Configurações"
+              className="hover:brightness-125 p-1"
+            >
+              <Settings size={18} color={COLORS.paperDim} />
+            </button>
+          )}
+          <Button variant="ghost" onClick={() => void signOut()} title="Sair">
+            <LogOut size={14} /> <span className="hidden sm:inline">Sair</span>
+          </Button>
         </div>
       </div>
 
