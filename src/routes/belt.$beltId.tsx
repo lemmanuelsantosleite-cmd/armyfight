@@ -12,7 +12,8 @@ import {
 } from "@/lib/afc";
 import { Header } from "@/components/afc-header";
 import { Sidebar } from "@/components/afc-sidebar";
-import { LoginModal, AdminSettingsModal } from "@/components/afc-modals";
+import { AdminSettingsModal } from "@/components/afc-modals";
+import { Lock } from "lucide-react";
 import { BeltSwatch, Eyebrow, StencilHeading } from "@/components/afc-ui";
 import { AddTechniqueButton, TechniqueCard } from "@/components/afc-technique";
 
@@ -47,12 +48,12 @@ function BeltPage() {
   const belt = findBelt(beltId);
   if (!belt) throw notFound();
 
-  const { data, isAdmin } = useAfc();
+  const { data, isMestre, canAccessBelt } = useAfc();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [activeCat, setActiveCat] = useState<CategoryKey>("defesas");
+  const locked = !canAccessBelt(belt.id);
 
   const beltData = data[belt.id] ?? { defesas: [], socos: [], chutes: [] };
   const list = useMemo(() => {
@@ -70,7 +71,6 @@ function BeltPage() {
     <div className="min-h-screen" style={{ background: COLORS.ink }}>
       <Header
         onMenu={() => setMenuOpen(true)}
-        onLoginClick={() => setLoginOpen(true)}
         onSettingsClick={() => setSettingsOpen(true)}
         search={search}
         setSearch={setSearch}
@@ -121,6 +121,17 @@ function BeltPage() {
             </div>
           </section>
 
+          {locked ? (
+            <section className="max-w-5xl mx-auto px-4 py-16 text-center">
+              <Lock size={40} color={COLORS.brass} className="mx-auto mb-4" />
+              <StencilHeading as="h2" className="text-xl mb-2" style={{ color: COLORS.brass }}>
+                Faixa bloqueada
+              </StencilHeading>
+              <p className="text-sm" style={{ color: COLORS.paperDim }}>
+                O conteúdo desta faixa fica disponível após você atingir esta graduação.
+              </p>
+            </section>
+          ) : (
           <section className="max-w-5xl mx-auto px-4 py-6">
             <div
               className="flex flex-wrap gap-1 p-1 mb-6 rounded-sm"
@@ -146,7 +157,7 @@ function BeltPage() {
               })}
             </div>
 
-            {isAdmin && (
+            {isMestre && (
               <div className="mb-5">
                 <AddTechniqueButton beltId={belt.id} category={activeCat} />
               </div>
@@ -178,9 +189,9 @@ function BeltPage() {
               )}
             </div>
           </section>
+          )}
         </main>
       </div>
-      {loginOpen && <LoginModal onClose={() => setLoginOpen(false)} />}
       {settingsOpen && <AdminSettingsModal onClose={() => setSettingsOpen(false)} />}
     </div>
   );

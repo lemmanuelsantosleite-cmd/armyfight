@@ -11,7 +11,8 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AfcProvider } from "@/lib/afc";
+import { AfcProvider, useAfc } from "@/lib/afc";
+import { AuthScreen, StatusScreen } from "@/components/afc-auth";
 
 function NotFoundComponent() {
   return (
@@ -133,9 +134,21 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AfcProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <AuthGate />
       </AfcProvider>
     </QueryClientProvider>
   );
+}
+
+function AuthGate() {
+  const { hydrated, user, profile, isMestre } = useAfc();
+  if (!hydrated) return null;
+  if (!user) return <AuthScreen />;
+  if (!isMestre) {
+    if (!profile) return null;
+    if (profile.status === "pendente") return <StatusScreen variant="pendente" />;
+    if (profile.status === "bloqueado") return <StatusScreen variant="bloqueado" />;
+    if (profile.bloqueado_inadimplencia) return <StatusScreen variant="inadimplente" />;
+  }
+  return <Outlet />;
 }

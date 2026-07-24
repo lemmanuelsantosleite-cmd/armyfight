@@ -4,17 +4,17 @@ import { ChevronRight } from "lucide-react";
 import { BELTS, CATEGORIES, COLORS, camoStyle, useAfc } from "@/lib/afc";
 import { Header } from "@/components/afc-header";
 import { Sidebar } from "@/components/afc-sidebar";
-import { LoginModal, AdminSettingsModal } from "@/components/afc-modals";
+import { AdminSettingsModal } from "@/components/afc-modals";
 import { BeltSwatch, Eyebrow, StencilHeading } from "@/components/afc-ui";
+import { Lock } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
-  const { data, hydrated } = useAfc();
+  const { data, hydrated, canAccessBelt } = useAfc();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -51,7 +51,6 @@ function Index() {
     <div className="min-h-screen" style={{ background: COLORS.ink }}>
       <Header
         onMenu={() => setMenuOpen(true)}
-        onLoginClick={() => setLoginOpen(true)}
         onSettingsClick={() => setSettingsOpen(true)}
         search={search}
         setSearch={setSearch}
@@ -150,6 +149,44 @@ function Index() {
                       (sum, c) => sum + (data[belt.id]?.[c.key]?.length || 0),
                       0,
                     );
+                    const locked = !canAccessBelt(belt.id);
+                    if (locked) {
+                      return (
+                        <div
+                          key={belt.id}
+                          className="text-left relative p-5 opacity-60 cursor-not-allowed"
+                          style={{
+                            background: COLORS.panel,
+                            border: `1px solid ${COLORS.line}`,
+                            clipPath:
+                              "polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px))",
+                          }}
+                          title="Faixa bloqueada — disponível após graduação"
+                        >
+                          <div className="absolute top-3 right-3">
+                            <Lock size={16} color={COLORS.brass} />
+                          </div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span
+                              className="text-3xl font-bold"
+                              style={{ color: COLORS.paperDim, fontFamily: "'Oswald', sans-serif" }}
+                            >
+                              {String(belt.n).padStart(2, "0")}
+                            </span>
+                          </div>
+                          <BeltSwatch belt={belt} size="lg" />
+                          <div
+                            className="mt-3 text-base font-semibold uppercase tracking-wide"
+                            style={{ color: COLORS.paperDim, fontFamily: "'Oswald', sans-serif" }}
+                          >
+                            {belt.name}
+                          </div>
+                          <div className="mt-1 text-xs" style={{ color: COLORS.paperDim }}>
+                            Bloqueada
+                          </div>
+                        </div>
+                      );
+                    }
                     return (
                       <Link
                         key={belt.id}
@@ -208,7 +245,6 @@ function Index() {
           )}
         </main>
       </div>
-      {loginOpen && <LoginModal onClose={() => setLoginOpen(false)} />}
       {settingsOpen && <AdminSettingsModal onClose={() => setSettingsOpen(false)} />}
     </div>
   );
