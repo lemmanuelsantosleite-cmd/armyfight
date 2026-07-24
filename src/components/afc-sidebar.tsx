@@ -1,10 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { X, ArrowLeft } from "lucide-react";
-import { BELTS, COLORS } from "@/lib/afc";
+import { X, ArrowLeft, Lock } from "lucide-react";
+import { BELTS, COLORS, useAfc } from "@/lib/afc";
 import { BeltSwatch, StencilHeading } from "@/components/afc-ui";
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { canAccessBelt } = useAfc();
 
   return (
     <>
@@ -43,6 +44,28 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         <nav className="py-2">
           {BELTS.map((belt) => {
             const active = pathname === `/belt/${belt.id}`;
+            const locked = !canAccessBelt(belt.id);
+            if (locked) {
+              return (
+                <div
+                  key={belt.id}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 opacity-50 cursor-not-allowed"
+                  title="Faixa bloqueada"
+                >
+                  <span
+                    className="text-xs w-5 shrink-0"
+                    style={{ color: COLORS.paperDim, fontFamily: "'Oswald', sans-serif" }}
+                  >
+                    {String(belt.n).padStart(2, "0")}
+                  </span>
+                  <BeltSwatch belt={belt} size="sm" />
+                  <span className="text-xs leading-tight flex-1" style={{ color: COLORS.paperDim }}>
+                    {belt.name}
+                  </span>
+                  <Lock size={12} color={COLORS.brass} />
+                </div>
+              );
+            }
             return (
               <Link
                 key={belt.id}
