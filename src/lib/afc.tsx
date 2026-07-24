@@ -1,4 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 export const COLORS = {
   ink: "#0a0b07",
@@ -42,12 +44,13 @@ export const BELTS: Belt[] = [
   { id: "b12", n: 12, name: "Faixa Preta", grad: ["#161610", "#161610"], text: "#d1a72c", dan: 3 },
 ];
 
-export type CategoryKey = "defesas" | "socos" | "chutes";
+export type CategoryKey = "defesas" | "socos" | "chutes" | "quedas";
 
 export const CATEGORIES: { key: CategoryKey; label: string; icon: string }[] = [
   { key: "defesas", label: "Defesas Pessoais", icon: "🥋" },
   { key: "socos", label: "Socos", icon: "👊" },
   { key: "chutes", label: "Chutes", icon: "🦵" },
+  { key: "quedas", label: "Quedas", icon: "🤸" },
 ];
 
 export type Technique = {
@@ -60,89 +63,28 @@ export type Technique = {
 
 export type TechniquesData = Record<string, Record<CategoryKey, Technique[]>>;
 
-export type AdminCredentials = { name: string; password: string };
+export type AlunoStatus = "pendente" | "aprovado" | "bloqueado";
+export type AppRole = "mestre" | "aluno";
 
-const STORAGE_KEY = "afc-hapkido-data-v1";
-const ADMIN_STORAGE_KEY = "afc-hapkido-admin-v1";
-const SESSION_KEY = "afc-hapkido-session-v1";
-
-export const DEFAULT_ADMIN: AdminCredentials = {
-  name: "Mestre Clóvis",
-  password: "Clovishapkidoarmy",
+export type Profile = {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  foto_url: string | null;
+  data_nascimento: string | null;
+  data_matricula: string;
+  faixa_id: string;
+  status: AlunoStatus;
+  bloqueado_inadimplencia: boolean;
 };
 
-export function seedTechniques(): TechniquesData {
+function emptyBeltData(): TechniquesData {
   const data: TechniquesData = {};
   BELTS.forEach((belt) => {
-    data[belt.id] = { defesas: [], socos: [], chutes: [] };
-    CATEGORIES.forEach((cat) => {
-      data[belt.id][cat.key] = [
-        {
-          id: `${belt.id}-${cat.key}-seed`,
-          title: `Técnica exemplo — ${cat.label}`,
-          description:
-            "Ainda não há conteúdo cadastrado. O administrador pode editar, remover ou adicionar novas técnicas com vídeo, foto e explicação.",
-          video: "",
-          image: "",
-        },
-      ];
-    });
+    data[belt.id] = { defesas: [], socos: [], chutes: [], quedas: [] };
   });
   return data;
-}
-
-function safeParse<T>(raw: string | null, fallback: T): T {
-  if (!raw) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-export function loadData(): TechniquesData {
-  if (typeof window === "undefined") return seedTechniques();
-  const stored = safeParse<TechniquesData | null>(localStorage.getItem(STORAGE_KEY), null);
-  if (!stored) return seedTechniques();
-  // Ensure every belt/category exists (schema-repair for older data)
-  const seed = seedTechniques();
-  BELTS.forEach((b) => {
-    if (!stored[b.id]) stored[b.id] = seed[b.id];
-    CATEGORIES.forEach((c) => {
-      if (!stored[b.id][c.key]) stored[b.id][c.key] = [];
-    });
-  });
-  return stored;
-}
-
-export function saveData(data: TechniquesData) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-export function loadAdmin(): AdminCredentials {
-  if (typeof window === "undefined") return DEFAULT_ADMIN;
-  return safeParse<AdminCredentials>(localStorage.getItem(ADMIN_STORAGE_KEY), DEFAULT_ADMIN);
-}
-
-export function saveAdmin(a: AdminCredentials) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(a));
-}
-
-export function loadSession(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(SESSION_KEY) === "1";
-}
-
-export function saveSession(v: boolean) {
-  if (typeof window === "undefined") return;
-  if (v) localStorage.setItem(SESSION_KEY, "1");
-  else localStorage.removeItem(SESSION_KEY);
-}
-
-export function newId() {
-  return `t-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 /* -------- Video URL helpers -------- */
@@ -164,92 +106,237 @@ export function toEmbed(url: string) {
 
 type AfcContextValue = {
   hydrated: boolean;
-  data: TechniquesData;
-  setData: (d: TechniquesData) => void;
-  admin: AdminCredentials;
-  setAdmin: (a: AdminCredentials) => void;
+  user: User | null;
+  profile: Profile | null;
+  role: AppRole | null;
+  isMestre: boolean;
+  /** legacy alias kept for existing components */
   isAdmin: boolean;
-  login: (password: string) => boolean;
-  logout: () => void;
-  // technique ops
-  addTechnique: (beltId: string, cat: CategoryKey, t: Omit<Technique, "id">) => void;
-  updateTechnique: (beltId: string, cat: CategoryKey, t: Technique) => void;
-  deleteTechnique: (beltId: string, cat: CategoryKey, id: string) => void;
-  moveTechnique: (beltId: string, cat: CategoryKey, id: string, dir: -1 | 1) => void;
+  data: TechniquesData;
+  signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
+  canAccessBelt: (beltId: string) => boolean;
+  // technique ops (mestre only)
+  addTechnique: (beltId: string, cat: CategoryKey, t: Omit<Technique, "id">) => Promise<void>;
+  updateTechnique: (beltId: string, cat: CategoryKey, t: Technique) => Promise<void>;
+  deleteTechnique: (beltId: string, cat: CategoryKey, id: string) => Promise<void>;
+  moveTechnique: (beltId: string, cat: CategoryKey, id: string, dir: -1 | 1) => Promise<void>;
 };
 
 const AfcContext = createContext<AfcContextValue | null>(null);
 
+type DbTechnique = {
+  id: string;
+  belt_id: string;
+  categoria: CategoryKey;
+  titulo: string;
+  descricao: string;
+  video_url: string;
+  imagem_url: string;
+  posicao: number;
+};
+
+function rowsToData(rows: DbTechnique[]): TechniquesData {
+  const data = emptyBeltData();
+  rows.forEach((r) => {
+    if (!data[r.belt_id]) return;
+    const arr = data[r.belt_id][r.categoria];
+    if (!arr) return;
+    arr.push({
+      id: r.id,
+      title: r.titulo,
+      description: r.descricao,
+      video: r.video_url,
+      image: r.imagem_url,
+    });
+  });
+  Object.values(data).forEach((cats) => {
+    Object.values(cats).forEach((arr) => arr.sort((a, b) => a.title.localeCompare(b.title)));
+  });
+  return data;
+}
+
 export function AfcProvider({ children }: { children: ReactNode }) {
   const [hydrated, setHydrated] = useState(false);
-  const [data, setDataState] = useState<TechniquesData>(() => seedTechniques());
-  const [admin, setAdminState] = useState<AdminCredentials>(DEFAULT_ADMIN);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [role, setRole] = useState<AppRole | null>(null);
+  const [rows, setRows] = useState<DbTechnique[]>([]);
+  const rowsRef = useRef<DbTechnique[]>([]);
+  rowsRef.current = rows;
 
-  useEffect(() => {
-    setDataState(loadData());
-    setAdminState(loadAdmin());
-    setIsAdmin(loadSession());
-    setHydrated(true);
+  const loadProfileAndRole = useCallback(async (uid: string) => {
+    const [{ data: p }, { data: rolesData }] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", uid),
+    ]);
+    setProfile((p as Profile | null) ?? null);
+    const roles = (rolesData ?? []) as { role: AppRole }[];
+    setRole(roles.some((r) => r.role === "mestre") ? "mestre" : roles[0]?.role ?? null);
   }, []);
 
-  const setData = (d: TechniquesData) => {
-    setDataState(d);
-    saveData(d);
-  };
-  const setAdmin = (a: AdminCredentials) => {
-    setAdminState(a);
-    saveAdmin(a);
-  };
-  const login = (password: string) => {
-    if (password === admin.password) {
-      setIsAdmin(true);
-      saveSession(true);
-      return true;
+  // Auth
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      setUser(data.session?.user ?? null);
+      setHydrated(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Load profile whenever user changes
+  useEffect(() => {
+    if (!user) {
+      setProfile(null);
+      setRole(null);
+      return;
     }
-    return false;
-  };
-  const logout = () => {
-    setIsAdmin(false);
-    saveSession(false);
+    void loadProfileAndRole(user.id);
+  }, [user, loadProfileAndRole]);
+
+  // Load techniques whenever authenticated
+  useEffect(() => {
+    if (!user) {
+      setRows([]);
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      const { data: t } = await supabase
+        .from("techniques")
+        .select("id,belt_id,categoria,titulo,descricao,video_url,imagem_url,posicao")
+        .order("posicao", { ascending: true });
+      if (!cancelled) setRows((t ?? []) as DbTechnique[]);
+    };
+    void load();
+
+    const channel = supabase
+      .channel("techniques-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "techniques" },
+        (payload) => {
+          setRows((prev) => {
+            if (payload.eventType === "DELETE") {
+              return prev.filter((r) => r.id !== (payload.old as DbTechnique).id);
+            }
+            const rec = payload.new as DbTechnique;
+            const idx = prev.findIndex((r) => r.id === rec.id);
+            if (idx === -1) return [...prev, rec];
+            const copy = prev.slice();
+            copy[idx] = rec;
+            return copy;
+          });
+        },
+      )
+      .subscribe();
+
+    const profileChannel = supabase
+      .channel("profile-self")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+        (payload) => setProfile(payload.new as Profile),
+      )
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+      supabase.removeChannel(profileChannel);
+    };
+  }, [user]);
+
+  const data = useMemo(() => rowsToData(rows), [rows]);
+
+  const canAccessBelt = useCallback(
+    (beltId: string) => {
+      if (role === "mestre") return true;
+      if (!profile) return false;
+      const my = BELTS.find((b) => b.id === profile.faixa_id)?.n ?? 1;
+      const target = BELTS.find((b) => b.id === beltId)?.n ?? 99;
+      return target <= my;
+    },
+    [profile, role],
+  );
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
+  }, []);
+
+  const refreshProfile = useCallback(async () => {
+    if (user) await loadProfileAndRole(user.id);
+  }, [user, loadProfileAndRole]);
+
+  const addTechnique: AfcContextValue["addTechnique"] = async (beltId, cat, t) => {
+    const maxPos = rowsRef.current
+      .filter((r) => r.belt_id === beltId && r.categoria === cat)
+      .reduce((m, r) => Math.max(m, r.posicao), -1);
+    await supabase.from("techniques").insert({
+      belt_id: beltId,
+      categoria: cat,
+      titulo: t.title,
+      descricao: t.description,
+      video_url: t.video,
+      imagem_url: t.image,
+      posicao: maxPos + 1,
+    });
   };
 
-  const addTechnique: AfcContextValue["addTechnique"] = (beltId, cat, t) => {
-    const next: TechniquesData = structuredClone(data);
-    next[beltId][cat] = [...next[beltId][cat], { ...t, id: newId() }];
-    setData(next);
+  const updateTechnique: AfcContextValue["updateTechnique"] = async (_belt, _cat, t) => {
+    await supabase
+      .from("techniques")
+      .update({
+        titulo: t.title,
+        descricao: t.description,
+        video_url: t.video,
+        imagem_url: t.image,
+      })
+      .eq("id", t.id);
   };
-  const updateTechnique: AfcContextValue["updateTechnique"] = (beltId, cat, t) => {
-    const next: TechniquesData = structuredClone(data);
-    next[beltId][cat] = next[beltId][cat].map((x) => (x.id === t.id ? t : x));
-    setData(next);
+
+  const deleteTechnique: AfcContextValue["deleteTechnique"] = async (_belt, _cat, id) => {
+    await supabase.from("techniques").delete().eq("id", id);
   };
-  const deleteTechnique: AfcContextValue["deleteTechnique"] = (beltId, cat, id) => {
-    const next: TechniquesData = structuredClone(data);
-    next[beltId][cat] = next[beltId][cat].filter((x) => x.id !== id);
-    setData(next);
-  };
-  const moveTechnique: AfcContextValue["moveTechnique"] = (beltId, cat, id, dir) => {
-    const next: TechniquesData = structuredClone(data);
-    const arr = next[beltId][cat];
-    const idx = arr.findIndex((x) => x.id === id);
+
+  const moveTechnique: AfcContextValue["moveTechnique"] = async (beltId, cat, id, dir) => {
+    const list = rowsRef.current
+      .filter((r) => r.belt_id === beltId && r.categoria === cat)
+      .sort((a, b) => a.posicao - b.posicao);
+    const idx = list.findIndex((r) => r.id === id);
     const j = idx + dir;
-    if (idx < 0 || j < 0 || j >= arr.length) return;
-    [arr[idx], arr[j]] = [arr[j], arr[idx]];
-    setData(next);
+    if (idx < 0 || j < 0 || j >= list.length) return;
+    const a = list[idx];
+    const b = list[j];
+    await Promise.all([
+      supabase.from("techniques").update({ posicao: b.posicao }).eq("id", a.id),
+      supabase.from("techniques").update({ posicao: a.posicao }).eq("id", b.id),
+    ]);
   };
+
+  const isMestre = role === "mestre";
 
   return (
     <AfcContext.Provider
       value={{
         hydrated,
+        user,
+        profile,
+        role,
+        isMestre,
+        isAdmin: isMestre,
         data,
-        setData,
-        admin,
-        setAdmin,
-        isAdmin,
-        login,
-        logout,
+        signOut,
+        refreshProfile,
+        canAccessBelt,
         addTechnique,
         updateTechnique,
         deleteTechnique,
