@@ -199,6 +199,16 @@ export function AuthScreen() {
         <p className="mt-5 text-[11px] text-center" style={{ color: COLORS.paperDim }}>
           Novos alunos passam por aprovação do Mestre Clóvis antes de acessar o conteúdo.
         </p>
+        <div className="mt-3 text-center">
+          <button
+            type="button"
+            onClick={() => { setErr(null); setShowMestre(true); }}
+            className="text-[11px] uppercase tracking-widest hover:brightness-125"
+            style={{ color: COLORS.brass, fontFamily: "'Oswald', sans-serif" }}
+          >
+            Entrar como Mestre (senha antiga)
+          </button>
+        </div>
       </div>
 
       {/* Hidden Lucas modal — opens with Ctrl+Shift+L */}
