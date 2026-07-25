@@ -141,14 +141,34 @@ function RootComponent() {
 }
 
 function AuthGate() {
-  const { hydrated, user, profile, isMestre } = useAfc();
+  const { hydrated, user, profile, isMestre, isSuper } = useAfc();
   if (!hydrated) return null;
   if (!user) return <AuthScreen />;
-  if (!isMestre) {
+  if (!isMestre && !isSuper) {
     if (!profile) return null;
     if (profile.status === "pendente") return <StatusScreen variant="pendente" />;
     if (profile.status === "bloqueado") return <StatusScreen variant="bloqueado" />;
     if (profile.bloqueado_inadimplencia) return <StatusScreen variant="inadimplente" />;
   }
-  return <Outlet />;
+  return (
+    <>
+      <Outlet />
+      <div
+        style={{
+          position: "fixed",
+          bottom: 6,
+          right: 10,
+          fontSize: 10,
+          letterSpacing: "0.15em",
+          textTransform: "uppercase",
+          color: "rgba(168,164,143,0.55)",
+          fontFamily: "'Oswald', sans-serif",
+          pointerEvents: "none",
+          zIndex: 30,
+        }}
+      >
+        Feito por Lucas
+      </div>
+    </>
+  );
 }
