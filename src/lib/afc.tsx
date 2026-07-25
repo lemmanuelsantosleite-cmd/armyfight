@@ -64,7 +64,7 @@ export type Technique = {
 export type TechniquesData = Record<string, Record<CategoryKey, Technique[]>>;
 
 export type AlunoStatus = "pendente" | "aprovado" | "bloqueado";
-export type AppRole = "mestre" | "aluno";
+export type AppRole = "mestre" | "aluno" | "super" | "admin_limitado";
 
 export type Profile = {
   id: string;
@@ -110,6 +110,7 @@ type AfcContextValue = {
   profile: Profile | null;
   role: AppRole | null;
   isMestre: boolean;
+  isSuper: boolean;
   /** legacy alias kept for existing components */
   isAdmin: boolean;
   data: TechniquesData;
@@ -172,7 +173,9 @@ export function AfcProvider({ children }: { children: ReactNode }) {
     ]);
     setProfile((p as Profile | null) ?? null);
     const roles = (rolesData ?? []) as { role: AppRole }[];
-    setRole(roles.some((r) => r.role === "mestre") ? "mestre" : roles[0]?.role ?? null);
+    if (roles.some((r) => r.role === "super")) setRole("super");
+    else if (roles.some((r) => r.role === "mestre")) setRole("mestre");
+    else setRole(roles[0]?.role ?? null);
   }, []);
 
   // Auth
@@ -259,7 +262,7 @@ export function AfcProvider({ children }: { children: ReactNode }) {
 
   const canAccessBelt = useCallback(
     (beltId: string) => {
-      if (role === "mestre") return true;
+      if (role === "mestre" || role === "super") return true;
       if (!profile) return false;
       const my = BELTS.find((b) => b.id === profile.faixa_id)?.n ?? 1;
       const target = BELTS.find((b) => b.id === beltId)?.n ?? 99;
@@ -322,7 +325,8 @@ export function AfcProvider({ children }: { children: ReactNode }) {
     ]);
   };
 
-  const isMestre = role === "mestre";
+  const isMestre = role === "mestre" || role === "super";
+  const isSuper = role === "super";
 
   return (
     <AfcContext.Provider
@@ -332,6 +336,7 @@ export function AfcProvider({ children }: { children: ReactNode }) {
         profile,
         role,
         isMestre,
+        isSuper,
         isAdmin: isMestre,
         data,
         signOut,
