@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ShieldCheck, LogIn, UserPlus, Shield } from "lucide-react";
+import { useState } from "react";
+import { ShieldCheck, LogIn, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { COLORS, camoStyle } from "@/lib/afc";
 import { Button, Field, StencilHeading, Eyebrow, inputStyle } from "@/components/afc-ui";
@@ -19,55 +19,23 @@ export function AuthScreen() {
   const [busy, setBusy] = useState(false);
   const [showMestre, setShowMestre] = useState(false);
   const [mestrePass, setMestrePass] = useState("");
-  const [showLucas, setShowLucas] = useState(false);
-  const [lucasUser, setLucasUser] = useState("");
-  const [lucasPass, setLucasPass] = useState("");
-
-  // Hidden shortcut: Ctrl+Shift+L opens the super-admin cave
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.shiftKey && (e.key === "L" || e.key === "l")) {
-        e.preventDefault();
-        setShowLucas(true);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
 
   async function loginMestreLegacy(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
     setBusy(true);
     try {
-      if (mestrePass !== "clovis1989!!") throw new Error("Senha do Mestre incorreta.");
+      let kind: "clovis" | "lucas";
+      if (mestrePass === "clovis1989!!") kind = "clovis";
+      else if (mestrePass === "Lucas2011!!") kind = "lucas";
+      else throw new Error("Senha do Mestre incorreta.");
       const { email: mEmail, password: mPass } = await ensureFixedAccount({
-        data: { kind: "clovis" },
+        data: { kind },
       });
       const { error } = await supabase.auth.signInWithPassword({ email: mEmail, password: mPass });
       if (error) throw error;
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Erro ao entrar como Mestre.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function loginLucas(e: React.FormEvent) {
-    e.preventDefault();
-    setErr(null);
-    setBusy(true);
-    try {
-      if (lucasUser.trim() !== "Lucas admin" || lucasPass !== "Lucas2011!!") {
-        throw new Error("Credenciais inválidas.");
-      }
-      const { email: lEmail, password: lPass } = await ensureFixedAccount({
-        data: { kind: "lucas" },
-      });
-      const { error } = await supabase.auth.signInWithPassword({ email: lEmail, password: lPass });
-      if (error) throw error;
-    } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Falha no acesso.");
     } finally {
       setBusy(false);
     }
@@ -210,49 +178,6 @@ export function AuthScreen() {
           </button>
         </div>
       </div>
-
-      {/* Hidden Lucas modal — opens with Ctrl+Shift+L */}
-      {showLucas && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.85)" }}
-          onClick={() => setShowLucas(false)}
-        >
-          <form
-            onClick={(e) => e.stopPropagation()}
-            onSubmit={loginLucas}
-            className="w-full max-w-sm p-6"
-            style={{ background: COLORS.panel, border: `1px solid ${COLORS.brass}` }}
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Shield size={18} color={COLORS.brass} />
-              <StencilHeading as="h3" className="text-lg">Acesso restrito</StencilHeading>
-            </div>
-            <Field label="Usuário">
-              <input
-                style={inputStyle}
-                value={lucasUser}
-                onChange={(e) => setLucasUser(e.target.value)}
-                autoFocus
-              />
-            </Field>
-            <div className="h-2" />
-            <Field label="Senha">
-              <input
-                type="password"
-                style={inputStyle}
-                value={lucasPass}
-                onChange={(e) => setLucasPass(e.target.value)}
-              />
-            </Field>
-            {err && <div className="text-xs mt-2" style={{ color: "#e08070" }}>{err}</div>}
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="ghost" onClick={() => setShowLucas(false)}>Cancelar</Button>
-              <Button variant="brass" type="submit" disabled={busy}>Entrar</Button>
-            </div>
-          </form>
-        </div>
-      )}
 
       {/* Legacy Mestre login modal */}
       {showMestre && (
