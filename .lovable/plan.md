@@ -1,55 +1,70 @@
 
-# Sistema Profissional Army Fight Club Hapkido
+# Plano — Exames avaliativos, Conquistas e Cave-mestra
 
-O escopo é grande. Vou entregar em **fases**, mantendo 100% do design militar atual. Cada fase é funcional e testável antes da próxima.
+Escopo grande. Vou entregar em **3 fases funcionais**, mantendo 100% do design militar atual (cores, camuflagem, tipografia, layout das faixas, componentes `afc-*`). Nenhuma tela existente muda visualmente — só ganha novos itens.
 
-## Fase 0 — Base (obrigatória antes de tudo)
-- Ativar **Lovable Cloud** (banco + auth + realtime).
-- Migrar dados atuais (técnicas em `localStorage`) para tabelas no banco.
-- Corrigir o bug de login atual substituindo o fluxo por auth real (email + senha).
-- Conta do Mestre Clóvis criada com role `mestre`.
+Antes de tudo: **hoje o login já é por e-mail/senha via Lovable Cloud (Fase 0 anterior)**. Você pediu "manter o login antigo do Mestre Clóvis com senha `clovis1989!!`". Vou implementar isso como **atalho de login**: um botão "Entrar como Mestre Clóvis" na tela de auth que aceita a senha `clovis1989!!` e faz login na conta real do Mestre no banco. A conta continua existindo no Cloud (necessário para RLS e sincronização entre dispositivos), mas você não precisa lembrar e-mail nenhum — só a senha antiga.
 
-## Fase 1 — Autenticação e Aprovação de Alunos
-- Cadastro de aluno (email, senha, nome, telefone, nascimento, foto).
-- Tabela `profiles` + tabela `user_roles` (`mestre` / `aluno`) + coluna `status` (`pendente`/`aprovado`/`bloqueado`).
-- Alunos novos ficam `pendente` — Mestre aprova no painel.
-- Notificação de novos cadastros no dashboard do Mestre.
-- RLS: cada aluno só vê a si mesmo; Mestre vê todos.
+## Fase A — Contas fixas, cave-mestra e administradores limitados
 
-## Fase 2 — Graduação e Bloqueio de Conteúdo
-- Campo `faixa_atual` no perfil do aluno.
-- Alunos veem só faixas ≤ à sua; demais aparecem com **cadeado** e mensagem.
-- Mestre altera faixa pelo painel; mudanças refletem em tempo real (Supabase Realtime).
-- Nova categoria **Quedas** somada às três atuais.
+- **Conta fixa Mestre Clóvis**
+  - E-mail interno: `clovis@armyfightclub.local`, senha `clovis1989!!`, role `mestre`.
+  - Botão "Entrar como Mestre" na tela de login aceita só a senha e entra.
+  - Depois de logado, Clóvis pode editar seu próprio e-mail real, telefone, foto etc. no perfil (a senha do atalho continua `clovis1989!!` até ele mesmo trocar).
+- **Cave-mestra Lucas (super-admin oculto)**
+  - Usuário `lucas_admin`, senha `Lucas2011!!`, role nova `super`.
+  - **Nunca aparece** em nenhuma listagem, painel, contagem, dashboard ou log. Nenhum outro usuário (incluindo Mestre) consegue ver, editar, excluir ou renomear. Protegido por trigger no banco.
+  - Login por um campo escondido (Ctrl+Shift+L abre modal secreto na tela de auth).
+  - Acesso total, sem limitações.
+- **Administradores "pequenos"** (nova role `admin_limitado`)
+  - Mestre cria/remove no painel e escolhe permissões por checkbox: aprovar alunos, lançar mensalidade, marcar presença, editar técnicas, criar exames, editar exames, emitir certificado.
+  - RLS respeita as permissões via tabela `admin_permissoes`.
+- **Rodapé discreto** com "Feito por Lucas" em todas as páginas (cor `paperDim`, tipografia atual).
 
-## Fase 3 — Mensalidades
-- Tabela `mensalidades` (aluno, valor, vencimento, pago em, status).
-- Mestre define valor padrão e registra pagamento manual.
-- Status 🟢 em dia / 🔴 atrasado calculado por data.
-- Bloqueio por inadimplência (flag no perfil) — aluno bloqueado só vê mensagem de aviso.
-- Página **Devedores** com dias de atraso, valor devido, último pagamento.
+## Fase B — Sistema de Exames avaliativos
 
-## Fase 4 — Presença
-- Tabela `presencas` (aluno, data, presente bool).
-- Aba **Presença** para o Mestre marcar por dia (grid alunos × dias).
-- Aluno vê própria frequência: total presenças, faltas, %.
+Substitui a tabela `exames` atual por uma estrutura completa (mantém dados existentes migrando o que for compatível).
 
-## Fase 5 — Dashboard, Exames, Estatísticas
-- Dashboard Mestre: totais (alunos ativos, bloqueados, mensalidades pendentes/pagas, cadastros pendentes, últimos graduados).
-- Tabela `exames` (aluno, faixa atual, próxima faixa, data, situação).
-- Gráficos (recharts): alunos por faixa, frequência mensal, mensalidades, contagens de mídia.
+- **Cadastro do exame**: aluno, faixa atual, faixa alvo, data, local, examinador, observações.
+- **Ficha de avaliação** com os 18 itens pedidos (defesas, socos, chutes, quedas, rolamentos, defesa faca, defesa bastão, sparring, condicionamento, equilíbrio, flexibilidade, coordenação, disciplina, respeito, frequência, participação, postura, controle emocional).
+- **Dois modelos** de nota escolhidos por exame: numérico 0–10 **ou** conceitual (Excelente/Bom/Regular/Necessita melhorar).
+- **Resultado final**: Aprovado / Aprovado com observações / Reprovado.
+- **Comentário do Mestre** (texto livre ilimitado) e **Objetivos para a próxima faixa** (lista editável) — objetivos aparecem no perfil do aluno.
+- **Mídia**: anexar fotos e vídeos ao exame (URLs, mesmo padrão das técnicas).
+- **Histórico permanente** agrupado por ano. Exames nunca são apagados de fato — cancelar/reabrir muda status, não remove.
+- **Certificado digital** para aprovados: página imprimível em A4 paisagem com nome, faixa, data, Mestre, logo Army Fight Club, assinatura digital (imagem enviada uma vez pelo Mestre) — botão "Baixar Certificado" (imprime como PDF pelo navegador, sem lib extra).
+- **Registro de alterações**: cada save grava autor + timestamp em `exame_auditoria`, exibido no rodapé do exame ("Última alteração: Mestre Clóvis 20/08/2026 19:43"). Nunca apagado.
+- **Permissões**: só Mestre (e Lucas) edita/exclui/reabre. Aluno só lê o próprio exame, baixa certificado, vê comentários/notas/objetivos.
+
+## Fase C — Conquistas, Perfil rico, Dashboard, Notificações
+
+- **Conquistas**: tabelas `achievements` (catálogo com 22 conquistas iniciais, medalha bronze/prata/ouro/diamante/lendária, regra) e `user_achievements` (desbloqueios por aluno).
+  - Regras automáticas via trigger/função ao inserir presença, exame aprovado, matrícula (tempo de academia), etc.
+  - Regras manuais (destaque do mês, disciplina exemplar, campeonato vencido) — Mestre concede pelo painel.
+  - Barra de progresso "X de Y" no perfil.
+- **Página de Perfil do aluno** (`/perfil`): foto, nome, faixa, tempo de academia, mensalidade, % presença, conquistas, certificados, objetivos ativos, histórico de exames, próximas faixas, próximo exame.
+- **Painel do Mestre** (`/admin`) ganha bloco de estatísticas: totais, ativos, bloqueados, mensalidades em atraso, próximos exames, últimos aprovados/reprovados, conquistas desbloqueadas no mês, frequência geral, alunos destaque.
+- **Notificações**: tabela `notificacoes` + sininho no header (dropdown). Gatilhos: nova técnica, nova faixa liberada, exame marcado/publicado, certificado disponível, conquista desbloqueada, comentário do Mestre, objetivos atualizados. Sem push/e-mail — só in-app com contador.
 
 ## Detalhes técnicos
-- Stack: TanStack Start + Lovable Cloud (Supabase). Realtime para sincronização.
-- Roles em tabela separada (`user_roles`) + função `has_role()` security definer.
-- RLS em todas as tabelas; `_authenticated` layout gate; rota `/auth` pública.
-- Design: reaproveita `COLORS`, componentes `afc-*` existentes — nenhuma mudança visual.
-- Login atual (senha única `Clovishapkidoarmy`) removido; Mestre passa a logar com email/senha reais criados na Fase 0.
 
-## Perguntas antes de começar
+- Stack atual (TanStack Start + Lovable Cloud + Realtime). Nenhuma nova dependência.
+- Novas tabelas: `exames` (recriada), `exame_avaliacoes`, `exame_midias`, `exame_auditoria`, `certificados`, `achievements`, `user_achievements`, `notificacoes`, `admin_permissoes`, `app_settings` (assinatura do Mestre).
+- Todas com RLS: aluno lê o próprio; Mestre e super leem tudo; `admin_limitado` conforme `admin_permissoes`.
+- `super` (Lucas) é filtrado em **toda** query de listagem por policy, para nunca vazar. Nenhuma UI o exibe.
+- Realtime nas tabelas críticas para sincronização.
+- Certificado impresso via `window.print()` numa rota dedicada com CSS de impressão — zero libs.
+- Rodapé "Feito por Lucas" adicionado ao `__root.tsx`.
 
-1. **Email do Mestre Clóvis** para criar a conta admin (ex.: `mestre@armyfightclub.com`)? E qual senha inicial?
-2. Confirmo que o **conteúdo das técnicas** (vídeos/imagens/textos) fica visível a **todos os alunos aprovados** respeitando a faixa — e **público** (sem login) fica **totalmente bloqueado**, correto?
-3. Posso entregar **Fases 0+1+2 primeiro** (auth, aprovação, graduação + bloqueio, categoria Quedas, correção de bugs) e as fases 3–5 (mensalidade, presença, dashboard) na sequência? Ou prefere tudo de uma vez (leva bem mais tempo e créditos)?
+## Ordem de entrega
 
-Responda os 3 pontos e eu ativo o Cloud e começo.
+1. **Fase A** primeiro (login Clóvis + cave Lucas + rodapé + admins limitados).
+2. Depois **Fase B** (Exames completos + Certificado + Auditoria).
+3. Por último **Fase C** (Conquistas + Perfil + Dashboard + Notificações).
+
+## Confirme antes de começar
+
+1. **OK entregar em A → B → C** (cada fase testável), ou você quer tudo de uma vez (leva bem mais tempo/créditos)?
+2. **Nome de exibição do Mestre no atalho**: mantenho "Mestre Clóvis"? Nome do examinador nos exames é sempre ele por padrão?
+3. **Certificado**: posso usar impressão do navegador (gera PDF pelo "Salvar como PDF") — evita adicionar biblioteca pesada. OK?
+4. **Assinatura digital**: Mestre envia uma imagem PNG da assinatura (upload por URL) uma vez e ela é usada em todos os certificados. OK?
