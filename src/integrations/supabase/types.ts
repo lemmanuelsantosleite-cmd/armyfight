@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_permissoes: {
+        Row: {
+          aprovar_alunos: boolean
+          created_at: string
+          criar_exame: boolean
+          editar_exame: boolean
+          editar_tecnicas: boolean
+          emitir_certificado: boolean
+          lancar_mensalidade: boolean
+          marcar_presenca: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          aprovar_alunos?: boolean
+          created_at?: string
+          criar_exame?: boolean
+          editar_exame?: boolean
+          editar_tecnicas?: boolean
+          emitir_certificado?: boolean
+          lancar_mensalidade?: boolean
+          marcar_presenca?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          aprovar_alunos?: boolean
+          created_at?: string
+          criar_exame?: boolean
+          editar_exame?: boolean
+          editar_tecnicas?: boolean
+          emitir_certificado?: boolean
+          lancar_mensalidade?: boolean
+          marcar_presenca?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string
@@ -273,10 +312,11 @@ export type Database = {
         Returns: boolean
       }
       is_mestre: { Args: { _user_id: string }; Returns: boolean }
+      is_super: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       aluno_status: "pendente" | "aprovado" | "bloqueado"
-      app_role: "mestre" | "aluno"
+      app_role: "mestre" | "aluno" | "super" | "admin_limitado"
       exame_status: "agendado" | "aprovado" | "reprovado" | "cancelado"
       mensalidade_status: "pendente" | "pago" | "atrasado"
       tecnica_categoria: "defesas" | "socos" | "chutes" | "quedas"
@@ -408,7 +448,7 @@ export const Constants = {
   public: {
     Enums: {
       aluno_status: ["pendente", "aprovado", "bloqueado"],
-      app_role: ["mestre", "aluno"],
+      app_role: ["mestre", "aluno", "super", "admin_limitado"],
       exame_status: ["agendado", "aprovado", "reprovado", "cancelado"],
       mensalidade_status: ["pendente", "pago", "atrasado"],
       tecnica_categoria: ["defesas", "socos", "chutes", "quedas"],
