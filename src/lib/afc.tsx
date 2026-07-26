@@ -290,6 +290,14 @@ export function AfcProvider({ children }: { children: ReactNode }) {
 
   const data = useMemo(() => rowsToData(rows), [rows]);
 
+  const reloadTechniques = useCallback(async () => {
+    const { data: t } = await supabase
+      .from("techniques")
+      .select("id,belt_id,categoria,titulo,descricao,video_url,imagem_url,posicao")
+      .order("posicao", { ascending: true });
+    setRows((t ?? []) as DbTechnique[]);
+  }, []);
+
   const canAccessBelt = useCallback(
     (beltId: string) => {
       if (role === "mestre" || role === "super") return true;
@@ -313,7 +321,7 @@ export function AfcProvider({ children }: { children: ReactNode }) {
     const maxPos = rowsRef.current
       .filter((r) => r.belt_id === beltId && r.categoria === cat)
       .reduce((m, r) => Math.max(m, r.posicao), -1);
-    await supabase.from("techniques").insert({
+    const { error } = await supabase.from("techniques").insert({
       belt_id: beltId,
       categoria: cat,
       titulo: t.title,
@@ -322,10 +330,12 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       imagem_url: t.image,
       posicao: maxPos + 1,
     });
+    if (error) throw new Error(error.message);
+    await reloadTechniques();
   };
 
   const updateTechnique: AfcContextValue["updateTechnique"] = async (_belt, _cat, t) => {
-    await supabase
+    const { error } = await supabase
       .from("techniques")
       .update({
         titulo: t.title,
@@ -334,10 +344,14 @@ export function AfcProvider({ children }: { children: ReactNode }) {
         imagem_url: t.image,
       })
       .eq("id", t.id);
+    if (error) throw new Error(error.message);
+    await reloadTechniques();
   };
 
   const deleteTechnique: AfcContextValue["deleteTechnique"] = async (_belt, _cat, id) => {
-    await supabase.from("techniques").delete().eq("id", id);
+    const { error } = await supabase.from("techniques").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+    await reloadTechniques();
   };
 
   const moveTechnique: AfcContextValue["moveTechnique"] = async (beltId, cat, id, dir) => {
@@ -353,6 +367,7 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       supabase.from("techniques").update({ posicao: b.posicao }).eq("id", a.id),
       supabase.from("techniques").update({ posicao: a.posicao }).eq("id", b.id),
     ]);
+    await reloadTechniques();
   };
 
   const isMestre = role === "mestre" || role === "super";
