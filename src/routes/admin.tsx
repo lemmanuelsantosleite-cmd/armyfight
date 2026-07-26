@@ -27,6 +27,7 @@ import { Header } from "@/components/afc-header";
 import { Sidebar } from "@/components/afc-sidebar";
 import { AdminSettingsModal } from "@/components/afc-modals";
 import { Button, Eyebrow, StencilHeading, Field, inputStyle, BeltSwatch } from "@/components/afc-ui";
+import { definirSenhaAluno, rejeitarCadastro } from "@/lib/alunos.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -230,8 +231,34 @@ function Dashboard({
 /* ---------- Alunos ---------- */
 
 function AlunosTab({ alunos, onReload }: { alunos: Profile[]; onReload: () => void }) {
+  const [senhas, setSenhas] = useState<Record<string, string>>({});
+  const [aviso, setAviso] = useState<Record<string, string>>({});
+
   async function setStatus(id: string, status: AlunoStatus) {
     await supabase.from("profiles").update({ status }).eq("id", id);
+    onReload();
+  }
+  async function salvarSenha(id: string) {
+    const senha = (senhas[id] ?? "").trim();
+    if (senha.length < 6) {
+      setAviso((s) => ({ ...s, [id]: "A senha precisa ter ao menos 6 caracteres." }));
+      return;
+    }
+    try {
+      await definirSenhaAluno({ data: { alunoId: id, senha } });
+      setSenhas((s) => ({ ...s, [id]: "" }));
+      setAviso((s) => ({ ...s, [id]: "Senha salva." }));
+    } catch (e: unknown) {
+      setAviso((s) => ({ ...s, [id]: e instanceof Error ? e.message : "Erro ao salvar senha." }));
+    }
+  }
+  async function rejeitar(id: string, nome: string) {
+    if (!confirm(`Rejeitar e remover a solicitação de "${nome}"?`)) return;
+    try {
+      await rejeitarCadastro({ data: { alunoId: id } });
+    } catch {
+      /* ignore */
+    }
     onReload();
   }
   async function setFaixa(id: string, faixa_id: string) {
@@ -317,6 +344,11 @@ function AlunosTab({ alunos, onReload }: { alunos: Profile[]; onReload: () => vo
                   <CheckCircle2 size={14} /> Aprovar
                 </Button>
               )}
+              {a.status === "pendente" && (
+                <Button variant="ghost" onClick={() => rejeitar(a.id, a.nome)}>
+                  <XCircle size={14} /> Rejeitar
+                </Button>
+              )}
               {a.status !== "bloqueado" && (
                 <Button variant="ghost" onClick={() => setStatus(a.id, "bloqueado")}>
                   <Ban size={14} /> Bloquear
@@ -334,6 +366,25 @@ function AlunosTab({ alunos, onReload }: { alunos: Profile[]; onReload: () => vo
               <Button variant="danger" onClick={() => excluir(a.id, a.nome)}>
                 <Trash2 size={14} /> Excluir
               </Button>
+            </div>
+            <div className="mt-3 flex flex-wrap items-end gap-2">
+              <div className="min-w-[220px] flex-1">
+                <Field label="Senha do aluno (criar / redefinir)">
+                  <input
+                    type="text"
+                    style={inputStyle}
+                    placeholder="mínimo 6 caracteres"
+                    value={senhas[a.id] ?? ""}
+                    onChange={(e) => setSenhas((s) => ({ ...s, [a.id]: e.target.value }))}
+                  />
+                </Field>
+              </div>
+              <Button variant="brass" onClick={() => salvarSenha(a.id)}>
+                <Save size={14} /> Salvar senha
+              </Button>
+              {aviso[a.id] && (
+                <div className="text-xs" style={{ color: COLORS.brass }}>{aviso[a.id]}</div>
+              )}
             </div>
           </div>
         );
