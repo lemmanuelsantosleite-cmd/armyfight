@@ -139,7 +139,8 @@ type DbTechnique = {
 
 function rowsToData(rows: DbTechnique[]): TechniquesData {
   const data = emptyBeltData();
-  rows.forEach((r) => {
+  const sorted = rows.slice().sort((a, b) => a.posicao - b.posicao);
+  sorted.forEach((r) => {
     if (!data[r.belt_id]) return;
     const arr = data[r.belt_id][r.categoria];
     if (!arr) return;
@@ -150,9 +151,6 @@ function rowsToData(rows: DbTechnique[]): TechniquesData {
       video: r.video_url,
       image: r.imagem_url,
     });
-  });
-  Object.values(data).forEach((cats) => {
-    Object.values(cats).forEach((arr) => arr.sort((a, b) => a.title.localeCompare(b.title)));
   });
   return data;
 }
@@ -171,8 +169,38 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
-    setProfile((p as Profile | null) ?? null);
     const roles = (rolesData ?? []) as { role: AppRole }[];
+    const isPrivileged =
+      roles.some((r) => r.role === "super") || roles.some((r) => r.role === "mestre");
+
+    let prof = (p as Profile | null) ?? null;
+
+    // Self-heal: an aluno account must always have a profile row, otherwise the
+    // app would render a blank screen forever.
+    if (!prof && !isPrivileged) {
+      const { data: authUser } = await supabase.auth.getUser();
+      const u = authUser.user;
+      if (u) {
+        const meta = (u.user_metadata ?? {}) as Record<string, string | null>;
+        await supabase.from("profiles").insert({
+          id: u.id,
+          nome: meta.nome || (u.email ?? "").split("@")[0],
+          email: u.email ?? "",
+          telefone: meta.telefone || null,
+          data_nascimento: meta.data_nascimento || null,
+          faixa_id: "b01",
+          status: "pendente",
+        });
+        const { data: p2 } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", u.id)
+          .maybeSingle();
+        prof = (p2 as Profile | null) ?? null;
+      }
+    }
+
+    setProfile(prof);
     if (roles.some((r) => r.role === "super")) setRole("super");
     else if (roles.some((r) => r.role === "mestre")) setRole("mestre");
     else setRole(roles[0]?.role ?? null);
@@ -260,6 +288,14 @@ export function AfcProvider({ children }: { children: ReactNode }) {
 
   const data = useMemo(() => rowsToData(rows), [rows]);
 
+  const reloadTechniques = useCallback(async () => {
+    const { data: t } = await supabase
+      .from("techniques")
+      .select("id,belt_id,categoria,titulo,descricao,video_url,imagem_url,posicao")
+      .order("posicao", { ascending: true });
+    setRows((t ?? []) as DbTechnique[]);
+  }, []);
+
   const canAccessBelt = useCallback(
     (beltId: string) => {
       if (role === "mestre" || role === "super") return true;
@@ -283,7 +319,7 @@ export function AfcProvider({ children }: { children: ReactNode }) {
     const maxPos = rowsRef.current
       .filter((r) => r.belt_id === beltId && r.categoria === cat)
       .reduce((m, r) => Math.max(m, r.posicao), -1);
-    await supabase.from("techniques").insert({
+    const { error } = await supabase.from("techniques").insert({
       belt_id: beltId,
       categoria: cat,
       titulo: t.title,
@@ -292,10 +328,12 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       imagem_url: t.image,
       posicao: maxPos + 1,
     });
+    if (error) throw new Error(error.message);
+    await reloadTechniques();
   };
 
   const updateTechnique: AfcContextValue["updateTechnique"] = async (_belt, _cat, t) => {
-    await supabase
+    const { error } = await supabase
       .from("techniques")
       .update({
         titulo: t.title,
@@ -304,10 +342,14 @@ export function AfcProvider({ children }: { children: ReactNode }) {
         imagem_url: t.image,
       })
       .eq("id", t.id);
+    if (error) throw new Error(error.message);
+    await reloadTechniques();
   };
 
   const deleteTechnique: AfcContextValue["deleteTechnique"] = async (_belt, _cat, id) => {
-    await supabase.from("techniques").delete().eq("id", id);
+    const { error } = await supabase.from("techniques").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+    await reloadTechniques();
   };
 
   const moveTechnique: AfcContextValue["moveTechnique"] = async (beltId, cat, id, dir) => {
@@ -323,6 +365,7 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       supabase.from("techniques").update({ posicao: b.posicao }).eq("id", a.id),
       supabase.from("techniques").update({ posicao: a.posicao }).eq("id", b.id),
     ]);
+    await reloadTechniques();
   };
 
   const isMestre = role === "mestre" || role === "super";

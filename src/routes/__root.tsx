@@ -145,7 +145,7 @@ function AuthGate() {
   if (!hydrated) return null;
   if (!user) return <AuthScreen />;
   if (!isMestre && !isSuper) {
-    if (!profile) return null;
+    if (!profile) return <StatusScreen variant="pendente" />;
     if (profile.status === "pendente") return <StatusScreen variant="pendente" />;
     if (profile.status === "bloqueado") return <StatusScreen variant="bloqueado" />;
     if (profile.bloqueado_inadimplencia) return <StatusScreen variant="inadimplente" />;
