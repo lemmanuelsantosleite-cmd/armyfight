@@ -171,8 +171,38 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
     ]);
-    setProfile((p as Profile | null) ?? null);
     const roles = (rolesData ?? []) as { role: AppRole }[];
+    const isPrivileged =
+      roles.some((r) => r.role === "super") || roles.some((r) => r.role === "mestre");
+
+    let prof = (p as Profile | null) ?? null;
+
+    // Self-heal: an aluno account must always have a profile row, otherwise the
+    // app would render a blank screen forever.
+    if (!prof && !isPrivileged) {
+      const { data: authUser } = await supabase.auth.getUser();
+      const u = authUser.user;
+      if (u) {
+        const meta = (u.user_metadata ?? {}) as Record<string, string | null>;
+        await supabase.from("profiles").insert({
+          id: u.id,
+          nome: meta.nome || (u.email ?? "").split("@")[0],
+          email: u.email ?? "",
+          telefone: meta.telefone || null,
+          data_nascimento: meta.data_nascimento || null,
+          faixa_id: "b01",
+          status: "pendente",
+        });
+        const { data: p2 } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", u.id)
+          .maybeSingle();
+        prof = (p2 as Profile | null) ?? null;
+      }
+    }
+
+    setProfile(prof);
     if (roles.some((r) => r.role === "super")) setRole("super");
     else if (roles.some((r) => r.role === "mestre")) setRole("mestre");
     else setRole(roles[0]?.role ?? null);
