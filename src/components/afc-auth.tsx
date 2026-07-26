@@ -4,16 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { COLORS, camoStyle } from "@/lib/afc";
 import { Button, Field, StencilHeading, Eyebrow, inputStyle } from "@/components/afc-ui";
 import { ensureFixedAccount } from "@/lib/bootstrap.functions";
+import { solicitarCadastro } from "@/lib/alunos.functions";
+import { alunoEmail, nomeSlug } from "@/lib/slug";
 
 type Mode = "login" | "signup";
 
 export function AuthScreen() {
   const [mode, setMode] = useState<Mode>("login");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [nascimento, setNascimento] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -48,45 +47,30 @@ export function AuthScreen() {
     setBusy(true);
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (nomeSlug(nome).length < 3) throw new Error("Nome ou senha inválidos.");
+        const { error } = await supabase.auth.signInWithPassword({
+          email: alunoEmail(nome),
+          password,
+        });
+        if (error) throw new Error("Nome ou senha inválidos.");
         const { data: prof } = await supabase
           .from("profiles")
           .select("status, bloqueado_inadimplencia")
           .eq("id", (await supabase.auth.getUser()).data.user?.id ?? "")
           .maybeSingle();
         if (prof?.status === "pendente") {
-          setMsg("Sua conta ainda está aguardando aprovação do Mestre.");
+          setMsg("Seu cadastro está aguardando aprovação do Mestre.");
         } else if (prof?.status === "bloqueado") {
           setErr("Sua conta foi bloqueada pelo administrador. Entre em contato com a academia.");
         }
       } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            data: {
-              nome: nome.trim(),
-              telefone: telefone.trim(),
-              data_nascimento: nascimento || null,
-            },
-          },
-        });
-        if (error) throw error;
-        setMsg("Cadastro enviado! Aguarde a aprovação do Mestre Clóvis para acessar o sistema.");
+        await solicitarCadastro({ data: { nome: nome.trim() } });
+        setNome("");
+        setMsg("Seu cadastro está aguardando aprovação do Mestre.");
       }
     } catch (e: unknown) {
       const raw = e instanceof Error ? e.message : "Erro desconhecido";
-      const pt = raw.includes("Invalid login")
-        ? "E-mail ou senha incorretos."
-        : raw.includes("Email not confirmed")
-          ? "Conta ainda não confirmada. Tente novamente em instantes ou fale com a academia."
-        : raw.includes("already registered")
-          ? "Este e-mail já está cadastrado."
-          : raw.includes("Password should be")
-            ? "A senha precisa ter pelo menos 6 caracteres."
-            : raw;
+      const pt = /Invalid login|invalid/i.test(raw) ? "Nome ou senha inválidos." : raw;
       setErr(pt);
     } finally {
       setBusy(false);
@@ -139,33 +123,27 @@ export function AuthScreen() {
         </div>
 
         <form onSubmit={submit} className="space-y-3">
-          {mode === "signup" && (
-            <>
-              <Field label="Nome completo">
-                <input style={inputStyle} value={nome} onChange={(e) => setNome(e.target.value)} required />
-              </Field>
-              <Field label="Telefone">
-                <input style={inputStyle} value={telefone} onChange={(e) => setTelefone(e.target.value)} />
-              </Field>
-              <Field label="Data de nascimento">
-                <input type="date" style={inputStyle} value={nascimento} onChange={(e) => setNascimento(e.target.value)} />
-              </Field>
-            </>
-          )}
-          <Field label="E-mail">
-            <input type="email" autoComplete="email" style={inputStyle} value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </Field>
-          <Field label="Senha">
+          <Field label="Nome completo">
             <input
-              type="password"
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
               style={inputStyle}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="name"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
               required
-              minLength={6}
             />
           </Field>
+          {mode === "login" && (
+            <Field label="Senha">
+              <input
+                type="password"
+                autoComplete="current-password"
+                style={inputStyle}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </Field>
+          )}
           {err && <div className="text-xs" style={{ color: "#e08070" }}>{err}</div>}
           {msg && <div className="text-xs" style={{ color: COLORS.brass }}>{msg}</div>}
           <div className="pt-2">
@@ -177,7 +155,7 @@ export function AuthScreen() {
         </form>
 
         <p className="mt-5 text-[11px] text-center" style={{ color: COLORS.paperDim }}>
-          Novos alunos passam por aprovação do Mestre Clóvis antes de acessar o conteúdo.
+          Informe apenas o nome completo. O Mestre Clóvis aprova o cadastro e cria a sua senha.
         </p>
         <div className="mt-3 text-center">
           <button
