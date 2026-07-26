@@ -50,6 +50,16 @@ export function AuthScreen() {
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("status, bloqueado_inadimplencia")
+          .eq("id", (await supabase.auth.getUser()).data.user?.id ?? "")
+          .maybeSingle();
+        if (prof?.status === "pendente") {
+          setMsg("Sua conta ainda está aguardando aprovação do Mestre.");
+        } else if (prof?.status === "bloqueado") {
+          setErr("Sua conta foi bloqueada pelo administrador. Entre em contato com a academia.");
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -70,6 +80,8 @@ export function AuthScreen() {
       const raw = e instanceof Error ? e.message : "Erro desconhecido";
       const pt = raw.includes("Invalid login")
         ? "E-mail ou senha incorretos."
+        : raw.includes("Email not confirmed")
+          ? "Conta ainda não confirmada. Tente novamente em instantes ou fale com a academia."
         : raw.includes("already registered")
           ? "Este e-mail já está cadastrado."
           : raw.includes("Password should be")
