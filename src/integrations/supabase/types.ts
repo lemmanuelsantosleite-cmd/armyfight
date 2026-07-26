@@ -205,6 +205,7 @@ export type Database = {
           foto_url: string | null
           id: string
           nome: string
+          nome_slug: string | null
           status: Database["public"]["Enums"]["aluno_status"]
           telefone: string | null
           updated_at: string
@@ -219,6 +220,7 @@ export type Database = {
           foto_url?: string | null
           id: string
           nome: string
+          nome_slug?: string | null
           status?: Database["public"]["Enums"]["aluno_status"]
           telefone?: string | null
           updated_at?: string
@@ -233,6 +235,7 @@ export type Database = {
           foto_url?: string | null
           id?: string
           nome?: string
+          nome_slug?: string | null
           status?: Database["public"]["Enums"]["aluno_status"]
           telefone?: string | null
           updated_at?: string
@@ -304,6 +307,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      afc_slug: { Args: { _nome: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -313,6 +317,7 @@ export type Database = {
       }
       is_mestre: { Args: { _user_id: string }; Returns: boolean }
       is_super: { Args: { _user_id: string }; Returns: boolean }
+      unaccent_fallback: { Args: { _t: string }; Returns: string }
     }
     Enums: {
       aluno_status: "pendente" | "aprovado" | "bloqueado"
