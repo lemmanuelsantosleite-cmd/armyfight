@@ -139,7 +139,8 @@ type DbTechnique = {
 
 function rowsToData(rows: DbTechnique[]): TechniquesData {
   const data = emptyBeltData();
-  rows.forEach((r) => {
+  const sorted = rows.slice().sort((a, b) => a.posicao - b.posicao);
+  sorted.forEach((r) => {
     if (!data[r.belt_id]) return;
     const arr = data[r.belt_id][r.categoria];
     if (!arr) return;
@@ -150,9 +151,6 @@ function rowsToData(rows: DbTechnique[]): TechniquesData {
       video: r.video_url,
       image: r.imagem_url,
     });
-  });
-  Object.values(data).forEach((cats) => {
-    Object.values(cats).forEach((arr) => arr.sort((a, b) => a.title.localeCompare(b.title)));
   });
   return data;
 }
