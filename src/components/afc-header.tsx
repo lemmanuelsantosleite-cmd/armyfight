@@ -86,6 +86,11 @@ export function Header({
               <ClipboardList size={18} color={COLORS.brass} />
             </Link>
           )}
+          {!isMestre && profile && (
+            <Link to="/aluno" title="Meu painel" className="hover:brightness-125 p-1">
+              <ClipboardList size={18} color={COLORS.brass} />
+            </Link>
+          )}
           {onSettingsClick && (
             <button
               onClick={onSettingsClick}

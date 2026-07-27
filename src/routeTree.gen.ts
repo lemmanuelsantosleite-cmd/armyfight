@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AlunoRouteImport } from './routes/aluno'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BeltBeltIdRouteImport } from './routes/belt.$beltId'
 
+const AlunoRoute = AlunoRouteImport.update({
+  id: '/aluno',
+  path: '/aluno',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -32,35 +38,46 @@ const BeltBeltIdRoute = BeltBeltIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/aluno': typeof AlunoRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/aluno': typeof AlunoRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/aluno': typeof AlunoRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/belt/$beltId'
+  fullPaths: '/' | '/admin' | '/aluno' | '/belt/$beltId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/belt/$beltId'
-  id: '__root__' | '/' | '/admin' | '/belt/$beltId'
+  to: '/' | '/admin' | '/aluno' | '/belt/$beltId'
+  id: '__root__' | '/' | '/admin' | '/aluno' | '/belt/$beltId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AlunoRoute: typeof AlunoRoute
   BeltBeltIdRoute: typeof BeltBeltIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/aluno': {
+      id: '/aluno'
+      path: '/aluno'
+      fullPath: '/aluno'
+      preLoaderRoute: typeof AlunoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AlunoRoute: AlunoRoute,
   BeltBeltIdRoute: BeltBeltIdRoute,
 }
 export const routeTree = rootRouteImport

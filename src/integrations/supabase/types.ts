@@ -71,36 +71,72 @@ export type Database = {
         }
         Relationships: []
       }
+      certificados: {
+        Row: {
+          aluno_id: string
+          arquivo_url: string
+          created_at: string
+          data_emissao: string
+          faixa_id: string
+          id: string
+          mestre_nome: string
+        }
+        Insert: {
+          aluno_id: string
+          arquivo_url?: string
+          created_at?: string
+          data_emissao?: string
+          faixa_id: string
+          id?: string
+          mestre_nome?: string
+        }
+        Update: {
+          aluno_id?: string
+          arquivo_url?: string
+          created_at?: string
+          data_emissao?: string
+          faixa_id?: string
+          id?: string
+          mestre_nome?: string
+        }
+        Relationships: []
+      }
       exames: {
         Row: {
           aluno_id: string
+          comentario: string | null
           created_at: string
           data_exame: string
           faixa_atual: string
           faixa_proxima: string
           id: string
+          nota: number | null
           observacao: string | null
           status: Database["public"]["Enums"]["exame_status"]
           updated_at: string
         }
         Insert: {
           aluno_id: string
+          comentario?: string | null
           created_at?: string
           data_exame: string
           faixa_atual: string
           faixa_proxima: string
           id?: string
+          nota?: number | null
           observacao?: string | null
           status?: Database["public"]["Enums"]["exame_status"]
           updated_at?: string
         }
         Update: {
           aluno_id?: string
+          comentario?: string | null
           created_at?: string
           data_exame?: string
           faixa_atual?: string
           faixa_proxima?: string
           id?: string
+          nota?: number | null
           observacao?: string | null
           status?: Database["public"]["Enums"]["exame_status"]
           updated_at?: string
@@ -114,6 +150,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      graduacoes: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          data: string
+          faixa_id: string
+          id: string
+          observacao: string | null
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          data?: string
+          faixa_id: string
+          id?: string
+          observacao?: string | null
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          data?: string
+          faixa_id?: string
+          id?: string
+          observacao?: string | null
+        }
+        Relationships: []
       }
       mensalidades: {
         Row: {
@@ -158,6 +221,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notificacoes: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          id: string
+          lida: boolean
+          mensagem: string
+          titulo: string
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          id?: string
+          lida?: boolean
+          mensagem?: string
+          titulo: string
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          id?: string
+          lida?: boolean
+          mensagem?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
+      objetivos: {
+        Row: {
+          aluno_id: string
+          concluido: boolean
+          created_at: string
+          id: string
+          posicao: number
+          texto: string
+          updated_at: string
+        }
+        Insert: {
+          aluno_id: string
+          concluido?: boolean
+          created_at?: string
+          id?: string
+          posicao?: number
+          texto: string
+          updated_at?: string
+        }
+        Update: {
+          aluno_id?: string
+          concluido?: boolean
+          created_at?: string
+          id?: string
+          posicao?: number
+          texto?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       presencas: {
         Row: {

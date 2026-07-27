@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { BELTS, CATEGORIES, COLORS, camoStyle, useAfc } from "@/lib/afc";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { data, hydrated, canAccessBelt } = useAfc();
+  const { data, hydrated, canAccessBelt, isMestre, user } = useAfc();
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -46,6 +46,9 @@ function Index() {
     });
     return out;
   }, [search, data, hydrated]);
+
+  // Aluno é direcionado automaticamente para o painel pessoal
+  if (hydrated && user && !isMestre) return <Navigate to="/aluno" />;
 
   return (
     <div className="min-h-screen" style={{ background: COLORS.ink }}>

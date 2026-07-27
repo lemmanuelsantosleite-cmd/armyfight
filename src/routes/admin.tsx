@@ -63,9 +63,11 @@ type Exame = {
   faixa_proxima: string;
   data_exame: string;
   status: "agendado" | "aprovado" | "reprovado";
+  nota: number | null;
+  comentario: string | null;
 };
 
-type Tab = "dashboard" | "alunos" | "mensalidades" | "presencas" | "exames";
+type Tab = "dashboard" | "alunos" | "mensalidades" | "presencas" | "exames" | "evolucao";
 
 function AdminPage() {
   const { isMestre, hydrated } = useAfc();
@@ -136,6 +138,7 @@ function AdminPage() {
                   { k: "mensalidades", label: "Mensalidades", icon: <DollarSign size={14} /> },
                   { k: "presencas", label: "Presença", icon: <UserCheck size={14} /> },
                   { k: "exames", label: "Exames", icon: <CalendarCheck size={14} /> },
+                  { k: "evolucao", label: "Evolução", icon: <Save size={14} /> },
                 ] as { k: Tab; label: string; icon: React.ReactNode }[]
               ).map((t) => {
                 const active = tab === t.k;
@@ -166,6 +169,7 @@ function AdminPage() {
             )}
             {tab === "presencas" && <PresencasTab alunos={alunos} presencas={presencas} onReload={load} />}
             {tab === "exames" && <ExamesTab alunos={alunos} exames={exames} onReload={load} />}
+            {tab === "evolucao" && <EvolucaoTab alunos={alunos} />}
           </div>
         </main>
       </div>
@@ -743,10 +747,241 @@ function ExamesTab({ alunos, exames, onReload }: { alunos: Profile[]; exames: Ex
               <Button variant="danger" onClick={() => excluir(e.id)}>
                 <Trash2 size={14} />
               </Button>
+              <AvaliacaoExame exame={e} onReload={onReload} />
             </div>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function AvaliacaoExame({ exame, onReload }: { exame: Exame; onReload: () => void }) {
+  const [nota, setNota] = useState(exame.nota != null ? String(exame.nota) : "");
+  const [comentario, setComentario] = useState(exame.comentario ?? "");
+
+  async function salvar() {
+    await supabase
+      .from("exames")
+      .update({ nota: nota === "" ? null : Number(nota), comentario })
+      .eq("id", exame.id);
+    onReload();
+  }
+
+  return (
+    <div className="w-full grid grid-cols-1 md:grid-cols-[120px_1fr_auto] gap-2 items-end mt-2">
+      <Field label="Nota">
+        <input
+          type="number"
+          step="0.1"
+          style={inputStyle}
+          value={nota}
+          onChange={(ev) => setNota(ev.target.value)}
+        />
+      </Field>
+      <Field label="Comentário do Mestre">
+        <input
+          type="text"
+          style={inputStyle}
+          value={comentario}
+          onChange={(ev) => setComentario(ev.target.value)}
+          placeholder="Pontos fortes e o que melhorar..."
+        />
+      </Field>
+      <Button variant="brass" onClick={() => void salvar()}>
+        <Save size={14} /> Salvar avaliação
+      </Button>
+    </div>
+  );
+}
+
+/* ---------- Evolução: objetivos e certificados ---------- */
+
+type Objetivo = { id: string; aluno_id: string; texto: string; concluido: boolean; posicao: number };
+type Certificado = {
+  id: string;
+  aluno_id: string;
+  faixa_id: string;
+  data_emissao: string;
+  mestre_nome: string;
+  arquivo_url: string;
+};
+
+function EvolucaoTab({ alunos }: { alunos: Profile[] }) {
+  const [alunoId, setAlunoId] = useState("");
+  const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
+  const [certificados, setCertificados] = useState<Certificado[]>([]);
+  const [novoObjetivo, setNovoObjetivo] = useState("");
+  const [certFaixa, setCertFaixa] = useState("b01");
+  const [certData, setCertData] = useState(new Date().toISOString().slice(0, 10));
+  const [certMestre, setCertMestre] = useState("Mestre Clóvis");
+  const [certUrl, setCertUrl] = useState("");
+
+  const load = useCallback(async () => {
+    if (!alunoId) {
+      setObjetivos([]);
+      setCertificados([]);
+      return;
+    }
+    const [o, c] = await Promise.all([
+      supabase.from("objetivos").select("*").eq("aluno_id", alunoId).order("posicao"),
+      supabase.from("certificados").select("*").eq("aluno_id", alunoId).order("data_emissao", { ascending: false }),
+    ]);
+    setObjetivos((o.data ?? []) as unknown as Objetivo[]);
+    setCertificados((c.data ?? []) as unknown as Certificado[]);
+  }, [alunoId]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  async function addObjetivo(e: React.FormEvent) {
+    e.preventDefault();
+    if (!alunoId || !novoObjetivo.trim()) return;
+    await supabase.from("objetivos").insert({
+      aluno_id: alunoId,
+      texto: novoObjetivo.trim(),
+      posicao: objetivos.length,
+    });
+    setNovoObjetivo("");
+    void load();
+  }
+  async function toggleObjetivo(o: Objetivo) {
+    await supabase.from("objetivos").update({ concluido: !o.concluido }).eq("id", o.id);
+    void load();
+  }
+  async function delObjetivo(id: string) {
+    await supabase.from("objetivos").delete().eq("id", id);
+    void load();
+  }
+  async function addCertificado(e: React.FormEvent) {
+    e.preventDefault();
+    if (!alunoId) return;
+    await supabase.from("certificados").insert({
+      aluno_id: alunoId,
+      faixa_id: certFaixa,
+      data_emissao: certData,
+      mestre_nome: certMestre,
+      arquivo_url: certUrl,
+    });
+    setCertUrl("");
+    void load();
+  }
+  async function delCertificado(id: string) {
+    await supabase.from("certificados").delete().eq("id", id);
+    void load();
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="p-4" style={{ background: COLORS.panel, border: `1px solid ${COLORS.line}` }}>
+        <Field label="Aluno">
+          <select value={alunoId} onChange={(e) => setAlunoId(e.target.value)} style={inputStyle}>
+            <option value="">— selecione —</option>
+            {alunos.map((a) => (
+              <option key={a.id} value={a.id}>{a.nome}</option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      {alunoId && (
+        <>
+          <form
+            onSubmit={addObjetivo}
+            className="p-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end"
+            style={{ background: COLORS.panel, border: `1px solid ${COLORS.line}` }}
+          >
+            <Field label="Novo objetivo da próxima graduação">
+              <input
+                type="text"
+                style={inputStyle}
+                value={novoObjetivo}
+                onChange={(e) => setNovoObjetivo(e.target.value)}
+                placeholder="Ex.: Melhorar equilíbrio"
+              />
+            </Field>
+            <Button type="submit" variant="brass">
+              <Plus size={14} /> Adicionar
+            </Button>
+          </form>
+
+          <div className="space-y-2">
+            {objetivos.length === 0 && (
+              <div className="p-3 text-sm text-center" style={{ color: COLORS.paperDim, border: `1px dashed ${COLORS.line}` }}>
+                Nenhum objetivo definido.
+              </div>
+            )}
+            {objetivos.map((o) => (
+              <div
+                key={o.id}
+                className="p-3 flex flex-wrap items-center gap-3"
+                style={{ background: COLORS.panel, border: `1px solid ${COLORS.line}` }}
+              >
+                <span className="flex-1 text-sm" style={{ color: o.concluido ? COLORS.paperDim : COLORS.paper }}>
+                  {o.texto}
+                </span>
+                <Button variant="ghost" onClick={() => void toggleObjetivo(o)}>
+                  <CheckCircle2 size={14} /> {o.concluido ? "Reabrir" : "Concluir"}
+                </Button>
+                <Button variant="danger" onClick={() => void delObjetivo(o.id)}>
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <form
+            onSubmit={addCertificado}
+            className="p-4 grid grid-cols-1 md:grid-cols-5 gap-3"
+            style={{ background: COLORS.panel, border: `1px solid ${COLORS.line}` }}
+          >
+            <Field label="Faixa do certificado">
+              <select value={certFaixa} onChange={(e) => setCertFaixa(e.target.value)} style={inputStyle}>
+                {BELTS.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Data">
+              <input type="date" style={inputStyle} value={certData} onChange={(e) => setCertData(e.target.value)} />
+            </Field>
+            <Field label="Mestre">
+              <input type="text" style={inputStyle} value={certMestre} onChange={(e) => setCertMestre(e.target.value)} />
+            </Field>
+            <Field label="Link do arquivo (opcional)">
+              <input type="url" style={inputStyle} value={certUrl} onChange={(e) => setCertUrl(e.target.value)} />
+            </Field>
+            <div className="flex items-end">
+              <Button type="submit" variant="brass">
+                <Plus size={14} /> Emitir
+              </Button>
+            </div>
+          </form>
+
+          <div className="space-y-2">
+            {certificados.length === 0 && (
+              <div className="p-3 text-sm text-center" style={{ color: COLORS.paperDim, border: `1px dashed ${COLORS.line}` }}>
+                Nenhum certificado emitido.
+              </div>
+            )}
+            {certificados.map((c) => (
+              <div
+                key={c.id}
+                className="p-3 flex flex-wrap items-center gap-3"
+                style={{ background: COLORS.panel, border: `1px solid ${COLORS.line}` }}
+              >
+                <div className="flex-1 text-sm" style={{ color: COLORS.paper }}>
+                  {findBelt(c.faixa_id)?.name ?? c.faixa_id} · {c.data_emissao} · {c.mestre_nome}
+                </div>
+                <Button variant="danger" onClick={() => void delCertificado(c.id)}>
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
