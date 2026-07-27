@@ -63,9 +63,11 @@ type Exame = {
   faixa_proxima: string;
   data_exame: string;
   status: "agendado" | "aprovado" | "reprovado";
+  nota: number | null;
+  comentario: string | null;
 };
 
-type Tab = "dashboard" | "alunos" | "mensalidades" | "presencas" | "exames";
+type Tab = "dashboard" | "alunos" | "mensalidades" | "presencas" | "exames" | "evolucao";
 
 function AdminPage() {
   const { isMestre, hydrated } = useAfc();
@@ -136,6 +138,7 @@ function AdminPage() {
                   { k: "mensalidades", label: "Mensalidades", icon: <DollarSign size={14} /> },
                   { k: "presencas", label: "Presença", icon: <UserCheck size={14} /> },
                   { k: "exames", label: "Exames", icon: <CalendarCheck size={14} /> },
+                  { k: "evolucao", label: "Evolução", icon: <Save size={14} /> },
                 ] as { k: Tab; label: string; icon: React.ReactNode }[]
               ).map((t) => {
                 const active = tab === t.k;
@@ -166,6 +169,7 @@ function AdminPage() {
             )}
             {tab === "presencas" && <PresencasTab alunos={alunos} presencas={presencas} onReload={load} />}
             {tab === "exames" && <ExamesTab alunos={alunos} exames={exames} onReload={load} />}
+            {tab === "evolucao" && <EvolucaoTab alunos={alunos} />}
           </div>
         </main>
       </div>
