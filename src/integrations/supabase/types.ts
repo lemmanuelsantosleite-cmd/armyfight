@@ -71,6 +71,39 @@ export type Database = {
         }
         Relationships: []
       }
+      avisos: {
+        Row: {
+          autor_nome: string
+          created_at: string
+          fixado: boolean
+          id: string
+          mensagem: string
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          autor_nome?: string
+          created_at?: string
+          fixado?: boolean
+          id?: string
+          mensagem?: string
+          tipo?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          autor_nome?: string
+          created_at?: string
+          fixado?: boolean
+          id?: string
+          mensagem?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       certificados: {
         Row: {
           aluno_id: string
@@ -98,6 +131,39 @@ export type Database = {
           faixa_id?: string
           id?: string
           mestre_nome?: string
+        }
+        Relationships: []
+      }
+      destaques: {
+        Row: {
+          aluno_id: string
+          aluno_nome: string
+          ativo: boolean
+          created_at: string
+          id: string
+          mes: string
+          motivo: string
+          updated_at: string
+        }
+        Insert: {
+          aluno_id: string
+          aluno_nome?: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          mes?: string
+          motivo?: string
+          updated_at?: string
+        }
+        Update: {
+          aluno_id?: string
+          aluno_nome?: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          mes?: string
+          motivo?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -364,6 +430,7 @@ export type Database = {
       }
       techniques: {
         Row: {
+          autor_nome: string
           belt_id: string
           categoria: Database["public"]["Enums"]["tecnica_categoria"]
           created_at: string
@@ -376,6 +443,7 @@ export type Database = {
           video_url: string
         }
         Insert: {
+          autor_nome?: string
           belt_id: string
           categoria: Database["public"]["Enums"]["tecnica_categoria"]
           created_at?: string
@@ -388,6 +456,7 @@ export type Database = {
           video_url?: string
         }
         Update: {
+          autor_nome?: string
           belt_id?: string
           categoria?: Database["public"]["Enums"]["tecnica_categoria"]
           created_at?: string

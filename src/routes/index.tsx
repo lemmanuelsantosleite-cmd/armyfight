@@ -7,6 +7,14 @@ import { Sidebar } from "@/components/afc-sidebar";
 import { AdminSettingsModal } from "@/components/afc-modals";
 import { BeltSwatch, Eyebrow, StencilHeading } from "@/components/afc-ui";
 import { Lock } from "lucide-react";
+import {
+  DestaqueCard,
+  MuralAvisos,
+  UltimasTecnicas,
+  useAvisos,
+  useDestaque,
+  useTecnicasRecentes,
+} from "@/components/afc-extras";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -17,6 +25,9 @@ function Index() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const { avisos } = useAvisos();
+  const { destaque } = useDestaque();
+  const tecnicasRecentes = useTecnicasRecentes(6);
 
   const searchResults = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -30,10 +41,7 @@ function Index() {
     BELTS.forEach((b) => {
       CATEGORIES.forEach((c) => {
         (data[b.id]?.[c.key] ?? []).forEach((t) => {
-          if (
-            t.title.toLowerCase().includes(q) ||
-            t.description.toLowerCase().includes(q)
-          ) {
+          if (t.title.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)) {
             out.push({
               beltId: b.id,
               beltName: b.name,
@@ -126,12 +134,28 @@ function Index() {
                     className="mt-5 max-w-xl text-sm sm:text-base"
                     style={{ color: COLORS.paperDim }}
                   >
-                    Doze faixas. Um único arquivo de missão. Consulte defesas pessoais,
-                    socos e chutes organizados por graduação — do recruta faixa branca ao
-                    instrutor faixa preta.
+                    Doze faixas. Um único arquivo de missão. Consulte defesas pessoais, socos e
+                    chutes organizados por graduação — do recruta faixa branca ao instrutor faixa
+                    preta.
                   </p>
                 </div>
               </section>
+
+              {(destaque || avisos.length > 0) && (
+                <section className="max-w-7xl mx-auto px-4 pt-8 space-y-4">
+                  {destaque && <DestaqueCard destaque={destaque} />}
+                  {avisos.length > 0 && (
+                    <div>
+                      <StencilHeading as="h2" className="text-xl font-bold mb-3">
+                        Mural de avisos do Mestre
+                      </StencilHeading>
+                      <MuralAvisos avisos={avisos.slice(0, 4)} />
+                    </div>
+                  )}
+                </section>
+              )}
+
+              <UltimasTecnicas tecnicas={tecnicasRecentes} canAccessBelt={canAccessBelt} />
 
               <section className="max-w-7xl mx-auto px-4 py-10">
                 <div className="flex items-baseline justify-between mb-6">

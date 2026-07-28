@@ -1,0 +1,1 @@
+ALTER TABLE public.destaques ADD COLUMN IF NOT EXISTS aluno_nome text NOT NULL DEFAULT '';
