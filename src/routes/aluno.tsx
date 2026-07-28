@@ -15,6 +15,9 @@ import {
   XCircle,
   Download,
   Lock,
+  TrendingUp,
+  History,
+  Megaphone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -30,6 +33,15 @@ import { Header } from "@/components/afc-header";
 import { Sidebar } from "@/components/afc-sidebar";
 import { AdminSettingsModal } from "@/components/afc-modals";
 import { Button, BeltSwatch, Eyebrow, StencilHeading } from "@/components/afc-ui";
+import {
+  DestaqueCard,
+  EvolucaoAluno,
+  LinhaDoTempo,
+  MuralAvisos,
+  useAvisos,
+  useDestaque,
+  type EventoTimeline,
+} from "@/components/afc-extras";
 
 export const Route = createFileRoute("/aluno")({
   head: () => ({
@@ -88,6 +100,8 @@ type Notificacao = {
 
 type Tab =
   | "perfil"
+  | "evolucao"
+  | "jornada"
   | "tecnicas"
   | "graduacao"
   | "frequencia"
@@ -96,6 +110,7 @@ type Tab =
   | "objetivos"
   | "certificados"
   | "conquistas"
+  | "mural"
   | "notificacoes";
 
 function fmtDate(d?: string | null) {
@@ -109,8 +124,7 @@ function tempoTreino(desde?: string | null) {
   if (!desde) return "—";
   const start = new Date(desde);
   const now = new Date();
-  let months =
-    (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+  let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
   if (now.getDate() < start.getDate()) months -= 1;
   if (months < 0) months = 0;
   const anos = Math.floor(months / 12);
@@ -167,13 +181,7 @@ function Stat({ label, value, hint }: { label: string; value: string | number; h
   );
 }
 
-function Badge({
-  tone,
-  children,
-}: {
-  tone: "ok" | "bad" | "warn";
-  children: React.ReactNode;
-}) {
+function Badge({ tone, children }: { tone: "ok" | "bad" | "warn"; children: React.ReactNode }) {
   const map = {
     ok: { bg: "#1a2c14", color: "#8ab766", border: "#4b5320" },
     bad: { bg: "#3a1810", color: "#e08070", border: "#6b2018" },
@@ -204,19 +212,50 @@ function AlunoPage() {
   const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
   const [certificados, setCertificados] = useState<Certificado[]>([]);
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
+  const { avisos } = useAvisos();
+  const { destaque } = useDestaque();
 
   const uid = user?.id ?? null;
 
   const load = useCallback(async () => {
     if (!uid) return;
     const [m, p, e, g, o, c, n] = await Promise.all([
-      supabase.from("mensalidades").select("*").eq("aluno_id", uid).order("vencimento", { ascending: false }),
-      supabase.from("presencas").select("*").eq("aluno_id", uid).order("data", { ascending: false }),
-      supabase.from("exames").select("*").eq("aluno_id", uid).order("data_exame", { ascending: false }),
-      supabase.from("graduacoes").select("*").eq("aluno_id", uid).order("data", { ascending: true }),
-      supabase.from("objetivos").select("*").eq("aluno_id", uid).order("posicao", { ascending: true }),
-      supabase.from("certificados").select("*").eq("aluno_id", uid).order("data_emissao", { ascending: false }),
-      supabase.from("notificacoes").select("*").eq("aluno_id", uid).order("created_at", { ascending: false }).limit(50),
+      supabase
+        .from("mensalidades")
+        .select("*")
+        .eq("aluno_id", uid)
+        .order("vencimento", { ascending: false }),
+      supabase
+        .from("presencas")
+        .select("*")
+        .eq("aluno_id", uid)
+        .order("data", { ascending: false }),
+      supabase
+        .from("exames")
+        .select("*")
+        .eq("aluno_id", uid)
+        .order("data_exame", { ascending: false }),
+      supabase
+        .from("graduacoes")
+        .select("*")
+        .eq("aluno_id", uid)
+        .order("data", { ascending: true }),
+      supabase
+        .from("objetivos")
+        .select("*")
+        .eq("aluno_id", uid)
+        .order("posicao", { ascending: true }),
+      supabase
+        .from("certificados")
+        .select("*")
+        .eq("aluno_id", uid)
+        .order("data_emissao", { ascending: false }),
+      supabase
+        .from("notificacoes")
+        .select("*")
+        .eq("aluno_id", uid)
+        .order("created_at", { ascending: false })
+        .limit(50),
     ]);
     if (m.data) setMensalidades(m.data as unknown as Mensalidade[]);
     if (p.data) setPresencas(p.data as unknown as Presenca[]);
@@ -281,7 +320,11 @@ function AlunoPage() {
 
   async function marcarLidas() {
     if (!uid) return;
-    await supabase.from("notificacoes").update({ lida: true }).eq("aluno_id", uid).eq("lida", false);
+    await supabase
+      .from("notificacoes")
+      .update({ lida: true })
+      .eq("aluno_id", uid)
+      .eq("lida", false);
     void load();
   }
 
@@ -290,16 +333,102 @@ function AlunoPage() {
     { icon: "🏆", label: "Primeira faixa", ok: graduacoes.length > 1 || (beltAtual?.n ?? 1) > 1 },
     { icon: "🔥", label: "50 treinos", ok: totalPresencas >= 50 },
     { icon: "💯", label: "100 treinos", ok: totalPresencas >= 100 },
-    { icon: "⭐", label: "Frequência acima de 90%", ok: presencas.length >= 10 && frequencia >= 90 },
-    { icon: "🎓", label: "Primeiro exame aprovado", ok: exames.some((e) => e.status === "aprovado") },
+    {
+      icon: "⭐",
+      label: "Frequência acima de 90%",
+      ok: presencas.length >= 10 && frequencia >= 90,
+    },
+    {
+      icon: "🎓",
+      label: "Primeiro exame aprovado",
+      ok: exames.some((e) => e.status === "aprovado"),
+    },
     { icon: "📜", label: "Primeiro certificado", ok: certificados.length > 0 },
     { icon: "💳", label: "Mensalidade em dia", ok: emDia && mensalidades.length > 0 },
     { icon: "🟦", label: "Faixa azul conquistada", ok: (beltAtual?.n ?? 1) >= 6 },
     { icon: "👑", label: "Faixa preta", ok: (beltAtual?.n ?? 1) >= 10 },
   ];
 
+  /* ---- Evolução ---- */
+  const nAtual = beltAtual?.n ?? 1;
+  const tecnicasConcluidas = BELTS.filter((b) => b.n < nAtual).reduce(
+    (sum, b) =>
+      sum + CATEGORIES.reduce((s, c) => s + (data[b.id]?.[c.key as CategoryKey]?.length ?? 0), 0),
+    0,
+  );
+  const tecnicasPendentes = CATEGORIES.reduce(
+    (s, c) => s + (data[profile.faixa_id]?.[c.key as CategoryKey]?.length ?? 0),
+    0,
+  );
+  const desdeGrad = ultimaGrad?.data ?? profile.data_matricula;
+  const presencasDesdeGraduacao = presencas.filter(
+    (p) => p.presente && p.data >= (desdeGrad ?? "0000-01-01"),
+  ).length;
+  const evolucaoInput = {
+    faixaId: profile.faixa_id,
+    presencasDesdeGraduacao,
+    frequencia,
+    objetivosTotal: objetivos.length,
+    objetivosConcluidos: objetivos.filter((o) => o.concluido).length,
+    tecnicasConcluidas,
+    tecnicasPendentes,
+  };
+
+  /* ---- Linha do tempo ---- */
+  const proximaFaixa = BELTS.find((b) => b.n === nAtual + 1) ?? null;
+  const eventos: EventoTimeline[] = [
+    {
+      data: profile.data_matricula,
+      tipo: "matricula" as const,
+      titulo: "Primeira aula",
+      detalhe: "Início da jornada no Army Fight Club Hapkido",
+    },
+    ...graduacoes.map((g) => ({
+      data: g.data,
+      tipo: "graduacao" as const,
+      titulo: findBelt(g.faixa_id)?.name ?? g.faixa_id,
+      detalhe: g.observacao ?? "Graduação conquistada",
+      beltId: g.faixa_id,
+    })),
+    ...exames.map((e) => ({
+      data: e.data_exame,
+      tipo: "exame" as const,
+      titulo: `Exame — ${findBelt(e.faixa_proxima)?.name ?? e.faixa_proxima}`,
+      detalhe: `Resultado: ${e.status}${e.nota != null ? ` · Nota ${e.nota}` : ""}`,
+      beltId: e.faixa_proxima,
+    })),
+    ...certificados.map((c) => ({
+      data: c.data_emissao,
+      tipo: "certificado" as const,
+      titulo: `Certificado — ${findBelt(c.faixa_id)?.name ?? c.faixa_id}`,
+      detalhe: c.mestre_nome,
+      beltId: c.faixa_id,
+    })),
+    ...conquistas
+      .filter((c) => c.ok)
+      .map((c) => ({
+        data: profile.data_matricula,
+        tipo: "conquista" as const,
+        titulo: `${c.icon} ${c.label}`,
+        detalhe: "Conquista desbloqueada",
+      })),
+    ...(proximaFaixa
+      ? [
+          {
+            data: `${new Date().getFullYear()}-12-31`,
+            tipo: "futuro" as const,
+            titulo: proximaFaixa.name,
+            detalhe: "Próximo objetivo",
+            beltId: proximaFaixa.id,
+          },
+        ]
+      : []),
+  ];
+
   const tabs: { k: Tab; label: string; icon: React.ReactNode }[] = [
     { k: "perfil", label: "Perfil", icon: <UserIcon size={14} /> },
+    { k: "evolucao", label: "Evolução", icon: <TrendingUp size={14} /> },
+    { k: "jornada", label: "Minha jornada", icon: <History size={14} /> },
     { k: "tecnicas", label: "Minhas técnicas", icon: <BookOpen size={14} /> },
     { k: "graduacao", label: "Graduação", icon: <Award size={14} /> },
     { k: "frequencia", label: "Frequência", icon: <CalendarCheck size={14} /> },
@@ -308,7 +437,12 @@ function AlunoPage() {
     { k: "objetivos", label: "Objetivos", icon: <Target size={14} /> },
     { k: "certificados", label: "Certificados", icon: <FileText size={14} /> },
     { k: "conquistas", label: "Conquistas", icon: <Medal size={14} /> },
-    { k: "notificacoes", label: `Avisos${naoLidas ? ` (${naoLidas})` : ""}`, icon: <Bell size={14} /> },
+    { k: "mural", label: "Mural", icon: <Megaphone size={14} /> },
+    {
+      k: "notificacoes",
+      label: `Avisos${naoLidas ? ` (${naoLidas})` : ""}`,
+      icon: <Bell size={14} />,
+    },
   ];
 
   return (
@@ -326,7 +460,9 @@ function AlunoPage() {
             <div className="absolute inset-0" style={camoStyle(0.35)} />
             <div
               className="absolute inset-0"
-              style={{ background: "linear-gradient(180deg, rgba(10,11,7,0.5), rgba(10,11,7,0.96))" }}
+              style={{
+                background: "linear-gradient(180deg, rgba(10,11,7,0.5), rgba(10,11,7,0.96))",
+              }}
             />
             <div className="relative max-w-6xl mx-auto px-4 py-8">
               <Eyebrow>Tropa</Eyebrow>
@@ -421,14 +557,36 @@ function AlunoPage() {
                   label="Próximo exame"
                   value={proximoExame ? fmtDate(proximoExame.data_exame) : "—"}
                   hint={
-                    proximoExame ? findBelt(proximoExame.faixa_proxima)?.name ?? "" : "Nenhum agendado"
+                    proximoExame
+                      ? (findBelt(proximoExame.faixa_proxima)?.name ?? "")
+                      : "Nenhum agendado"
                   }
                 />
                 <Stat label="Avisos novos" value={naoLidas} />
-                <Stat label="Objetivos" value={objetivos.filter((o) => !o.concluido).length} hint="Em aberto" />
+                <Stat
+                  label="Objetivos"
+                  value={objetivos.filter((o) => !o.concluido).length}
+                  hint="Em aberto"
+                />
               </div>
             )}
 
+            {tab === "evolucao" && (
+              <div className="animate-fade-in space-y-4">
+                <EvolucaoAluno input={evolucaoInput} objetivos={objetivos} />
+              </div>
+            )}
+            {tab === "jornada" && (
+              <div className="animate-fade-in">
+                <LinhaDoTempo eventos={eventos} />
+              </div>
+            )}
+            {tab === "mural" && (
+              <div className="animate-fade-in space-y-4">
+                {destaque && <DestaqueCard destaque={destaque} />}
+                <MuralAvisos avisos={avisos} />
+              </div>
+            )}
             {tab === "tecnicas" && (
               <div className="space-y-6">
                 {BELTS.filter((b) => canAccessBelt(b.id)).map((b) => (
@@ -457,7 +615,11 @@ function AlunoPage() {
                             ) : (
                               <ul className="space-y-1">
                                 {list.map((t) => (
-                                  <li key={t.id} className="text-sm" style={{ color: COLORS.paper }}>
+                                  <li
+                                    key={t.id}
+                                    className="text-sm"
+                                    style={{ color: COLORS.paper }}
+                                  >
                                     • {t.title}
                                   </li>
                                 ))}
@@ -470,7 +632,10 @@ function AlunoPage() {
                   </div>
                 ))}
                 <Panel>
-                  <div className="flex items-center gap-2 text-sm" style={{ color: COLORS.paperDim }}>
+                  <div
+                    className="flex items-center gap-2 text-sm"
+                    style={{ color: COLORS.paperDim }}
+                  >
                     <Lock size={14} color={COLORS.brass} />
                     Faixas superiores permanecem bloqueadas até liberação do Mestre.
                   </div>
@@ -487,7 +652,7 @@ function AlunoPage() {
                     label="Próxima graduação"
                     value={
                       proximoExame
-                        ? findBelt(proximoExame.faixa_proxima)?.name ?? proximoExame.faixa_proxima
+                        ? (findBelt(proximoExame.faixa_proxima)?.name ?? proximoExame.faixa_proxima)
                         : "A definir"
                     }
                     hint={proximoExame ? `Exame em ${fmtDate(proximoExame.data_exame)}` : undefined}
@@ -576,7 +741,11 @@ function AlunoPage() {
                               {m.pago_em && ` · Pago em ${fmtDate(m.pago_em)}`}
                             </div>
                           </div>
-                          <Badge tone={m.status === "pago" ? "ok" : m.status === "atrasado" ? "bad" : "warn"}>
+                          <Badge
+                            tone={
+                              m.status === "pago" ? "ok" : m.status === "atrasado" ? "bad" : "warn"
+                            }
+                          >
                             {m.status}
                           </Badge>
                         </div>
@@ -856,12 +1025,9 @@ function FrequenciaTab({
             if (day === null) return <div key={`e${i}`} />;
             const iso = `${ref.y}-${String(ref.m + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
             const rec = byDate.get(iso);
-            const bg =
-              rec === true ? "#1a2c14" : rec === false ? "#3a1810" : "transparent";
-            const color =
-              rec === true ? "#8ab766" : rec === false ? "#e08070" : COLORS.paperDim;
-            const border =
-              rec === true ? "#4b5320" : rec === false ? "#6b2018" : COLORS.line;
+            const bg = rec === true ? "#1a2c14" : rec === false ? "#3a1810" : "transparent";
+            const color = rec === true ? "#8ab766" : rec === false ? "#e08070" : COLORS.paperDim;
+            const border = rec === true ? "#4b5320" : rec === false ? "#6b2018" : COLORS.line;
             return (
               <div
                 key={iso}

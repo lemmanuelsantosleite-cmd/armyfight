@@ -327,6 +327,7 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       video_url: t.video,
       imagem_url: t.image,
       posicao: maxPos + 1,
+      autor_nome: profile?.nome || "Mestre Clóvis",
     });
     if (error) throw new Error(error.message);
     await reloadTechniques();
