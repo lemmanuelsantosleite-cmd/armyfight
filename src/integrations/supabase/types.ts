@@ -134,6 +134,47 @@ export type Database = {
         }
         Relationships: []
       }
+      conquistas: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          data: string
+          descricao: string | null
+          icone: string
+          id: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          icone?: string
+          id?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          icone?: string
+          id?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conquistas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       destaques: {
         Row: {
           aluno_id: string
@@ -353,6 +394,8 @@ export type Database = {
           id: string
           observacao: string | null
           presente: boolean
+          tipo_aula: string | null
+          turma: Database["public"]["Enums"]["turma_tipo"] | null
         }
         Insert: {
           aluno_id: string
@@ -361,6 +404,8 @@ export type Database = {
           id?: string
           observacao?: string | null
           presente?: boolean
+          tipo_aula?: string | null
+          turma?: Database["public"]["Enums"]["turma_tipo"] | null
         }
         Update: {
           aluno_id?: string
@@ -369,6 +414,8 @@ export type Database = {
           id?: string
           observacao?: string | null
           presente?: boolean
+          tipo_aula?: string | null
+          turma?: Database["public"]["Enums"]["turma_tipo"] | null
         }
         Relationships: [
           {
@@ -394,6 +441,7 @@ export type Database = {
           nome_slug: string | null
           status: Database["public"]["Enums"]["aluno_status"]
           telefone: string | null
+          turma: Database["public"]["Enums"]["turma_tipo"]
           updated_at: string
         }
         Insert: {
@@ -409,6 +457,7 @@ export type Database = {
           nome_slug?: string | null
           status?: Database["public"]["Enums"]["aluno_status"]
           telefone?: string | null
+          turma?: Database["public"]["Enums"]["turma_tipo"]
           updated_at?: string
         }
         Update: {
@@ -424,6 +473,7 @@ export type Database = {
           nome_slug?: string | null
           status?: Database["public"]["Enums"]["aluno_status"]
           telefone?: string | null
+          turma?: Database["public"]["Enums"]["turma_tipo"]
           updated_at?: string
         }
         Relationships: []
@@ -514,6 +564,7 @@ export type Database = {
       exame_status: "agendado" | "aprovado" | "reprovado" | "cancelado"
       mensalidade_status: "pendente" | "pago" | "atrasado"
       tecnica_categoria: "defesas" | "socos" | "chutes" | "quedas"
+      turma_tipo: "infantil" | "juvenil" | "adulto"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -646,6 +697,7 @@ export const Constants = {
       exame_status: ["agendado", "aprovado", "reprovado", "cancelado"],
       mensalidade_status: ["pendente", "pago", "atrasado"],
       tecnica_categoria: ["defesas", "socos", "chutes", "quedas"],
+      turma_tipo: ["infantil", "juvenil", "adulto"],
     },
   },
 } as const
