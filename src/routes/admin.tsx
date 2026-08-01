@@ -1190,94 +1190,95 @@ function PresencasTab({
   presencas: Presenca[];
   onReload: () => void;
 }) {
-  const [data, setData] = useState(new Date().toISOString().slice(0, 10));
-  const aprovados = alunos.filter((a) => a.status === "aprovado");
-  const doDia = useMemo(() => {
-    const m = new Map<string, boolean>();
-    presencas.filter((p) => p.data === data).forEach((p) => m.set(p.aluno_id, p.presente));
-    return m;
-  }, [presencas, data]);
+  const [sub, setSub] = useState<"chamada" | TurmaKey | "historico" | "alertas">("chamada");
+  const [exames, setExames] = useState<
+    { aluno_id: string; data_exame: string; status: string }[]
+  >([]);
+  const [graduacoes, setGraduacoes] = useState<{ aluno_id: string; data: string; faixa_id: string }[]>(
+    [],
+  );
 
-  async function setPresenca(alunoId: string, presente: boolean) {
-    await supabase
-      .from("presencas")
-      .upsert({ aluno_id: alunoId, data, presente }, { onConflict: "aluno_id,data" });
-    onReload();
-  }
+  useEffect(() => {
+    void (async () => {
+      const [e, g] = await Promise.all([
+        supabase.from("exames").select("aluno_id,data_exame,status").eq("status", "agendado"),
+        supabase.from("graduacoes").select("aluno_id,data,faixa_id").order("data"),
+      ]);
+      setExames((e.data ?? []) as unknown as typeof exames);
+      setGraduacoes((g.data ?? []) as unknown as typeof graduacoes);
+    })();
+  }, []);
 
-  const stats = useMemo(() => {
-    const map = new Map<string, { total: number; presentes: number }>();
-    presencas.forEach((p) => {
-      const cur = map.get(p.aluno_id) ?? { total: 0, presentes: 0 };
-      cur.total++;
-      if (p.presente) cur.presentes++;
-      map.set(p.aluno_id, cur);
+  const proximosExames = useMemo(() => {
+    const m = new Map<string, string>();
+    exames.forEach((e) => {
+      const cur = m.get(e.aluno_id);
+      if (!cur || e.data_exame < cur) m.set(e.aluno_id, e.data_exame);
     });
-    return map;
-  }, [presencas]);
+    return m;
+  }, [exames]);
+
+  const ultimasGraduacoes = useMemo(() => {
+    const m = new Map<string, string>();
+    graduacoes.forEach((g) => {
+      m.set(g.aluno_id, `${findBelt(g.faixa_id)?.name ?? g.faixa_id} (${g.data})`);
+    });
+    return m;
+  }, [graduacoes]);
+
+  const subs: { k: typeof sub; label: string }[] = [
+    { k: "chamada", label: "Chamada rápida" },
+    ...TURMAS.map((t) => ({ k: t.k as typeof sub, label: `${t.icon} ${t.label}` })),
+    { k: "historico", label: "Histórico" },
+    { k: "alertas", label: "Alertas" },
+  ];
 
   return (
     <div className="space-y-4">
-      <div
-        className="p-3 flex flex-wrap items-center gap-3"
-        style={{ background: COLORS.panel, border: `1px solid ${COLORS.line}` }}
-      >
-        <Field label="Data da aula">
-          <input
-            type="date"
-            style={{ ...inputStyle, width: 180 }}
-            value={data}
-            onChange={(e) => setData(e.target.value)}
-          />
-        </Field>
-      </div>
+      <ResumoTurmas alunos={alunos} presencas={presencas} />
 
-      <div className="space-y-2">
-        {aprovados.length === 0 && (
-          <div
-            className="p-4 text-sm text-center"
-            style={{ color: COLORS.paperDim, border: `1px dashed ${COLORS.line}` }}
-          >
-            Nenhum aluno aprovado.
-          </div>
-        )}
-        {aprovados.map((a) => {
-          const marcada = doDia.get(a.id);
-          const s = stats.get(a.id);
-          const freq = s && s.total > 0 ? Math.round((s.presentes / s.total) * 100) : 0;
+      <div className="flex flex-wrap gap-1">
+        {subs.map((s) => {
+          const active = sub === s.k;
           return (
-            <div
-              key={a.id}
-              className="p-3 flex flex-wrap items-center gap-3"
-              style={{ background: COLORS.panel, border: `1px solid ${COLORS.line}` }}
+            <button
+              key={String(s.k)}
+              onClick={() => setSub(s.k)}
+              className="px-3 py-1.5 text-[11px] uppercase tracking-wider"
+              style={{
+                background: active ? COLORS.oliveDim : "transparent",
+                color: active ? COLORS.paper : COLORS.paperDim,
+                border: `1px solid ${active ? COLORS.oliveBright : COLORS.line}`,
+                fontFamily: "'Oswald', sans-serif",
+              }}
             >
-              <div className="flex-1 min-w-[180px]">
-                <div
-                  className="text-sm uppercase font-semibold"
-                  style={{ color: COLORS.paper, fontFamily: "'Oswald', sans-serif" }}
-                >
-                  {a.nome}
-                </div>
-                <div className="text-xs" style={{ color: COLORS.paperDim }}>
-                  Frequência: {freq}% ({s?.presentes ?? 0}/{s?.total ?? 0})
-                </div>
-              </div>
-              <Button
-                variant={marcada === true ? "brass" : "ghost"}
-                onClick={() => setPresenca(a.id, true)}
-              >
-                <CheckCircle2 size={14} /> Presente
-              </Button>
-              <Button
-                variant={marcada === false ? "danger" : "ghost"}
-                onClick={() => setPresenca(a.id, false)}
-              >
-                <XCircle size={14} /> Ausente
-              </Button>
-            </div>
+              {s.label}
+            </button>
           );
         })}
       </div>
+
+      {sub === "chamada" && (
+        <ChamadaRapida alunos={alunos} presencas={presencas} onReload={onReload} />
+      )}
+      {(sub === "infantil" || sub === "juvenil" || sub === "adulto") && (
+        <PainelTurma
+          turma={sub}
+          alunos={alunos}
+          presencas={presencas}
+          proximosExames={proximosExames}
+          ultimasGraduacoes={ultimasGraduacoes}
+        />
+      )}
+      {sub === "historico" && <HistoricoFrequencia alunos={alunos} presencas={presencas} />}
+      {sub === "alertas" && (
+        <div className="space-y-2">
+          <AlertasFrequencia alunos={alunos} presencas={presencas} />
+          <div className="text-xs" style={{ color: COLORS.paperDim }}>
+            Alertas aparecem para alunos com 4 ou mais aulas registradas e frequência abaixo de 70%.
+          </div>
+        </div>
+      )}
     </div>
   );
 }
