@@ -878,6 +878,13 @@ function AlunosTab({ alunos, onReload }: { alunos: Profile[]; onReload: () => vo
     await supabase.from("profiles").update({ faixa_id }).eq("id", id);
     onReload();
   }
+  async function setTurma(id: string, turma: TurmaKey) {
+    await supabase
+      .from("profiles")
+      .update({ turma } as never)
+      .eq("id", id);
+    onReload();
+  }
   async function setBloqueio(id: string, bloqueado_inadimplencia: boolean) {
     await supabase.from("profiles").update({ bloqueado_inadimplencia }).eq("id", id);
     onReload();
@@ -956,6 +963,21 @@ function AlunosTab({ alunos, onReload }: { alunos: Profile[]; onReload: () => vo
                     <BeltSwatch belt={belt} size="md" />
                   </div>
                 )}
+                <div className="mt-2">
+                  <Field label="Turma">
+                    <select
+                      value={turmaOf(a)}
+                      onChange={(e) => setTurma(a.id, e.target.value as TurmaKey)}
+                      style={inputStyle}
+                    >
+                      {TURMAS.map((t) => (
+                        <option key={t.k} value={t.k}>
+                          {t.icon} {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
