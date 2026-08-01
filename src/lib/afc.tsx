@@ -77,6 +77,7 @@ export type Profile = {
   faixa_id: string;
   status: AlunoStatus;
   bloqueado_inadimplencia: boolean;
+  turma?: "infantil" | "juvenil" | "adulto" | null;
 };
 
 function emptyBeltData(): TechniquesData {
