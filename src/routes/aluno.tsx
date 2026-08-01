@@ -333,6 +333,8 @@ function AlunoPage() {
     void load();
   }
 
+  const { conquistas: medalhas } = useConquistas(uid);
+
   const conquistas = [
     { icon: "🥋", label: "Primeira aula", ok: presencas.length > 0 },
     { icon: "🏆", label: "Primeira faixa", ok: graduacoes.length > 1 || (beltAtual?.n ?? 1) > 1 },
