@@ -40,6 +40,19 @@ import {
 } from "@/components/afc-ui";
 import { definirSenhaAluno, rejeitarCadastro } from "@/lib/alunos.functions";
 import {
+  AlertasFrequencia,
+  ChamadaRapida,
+  HistoricoFrequencia,
+  PainelTurma,
+  ResumoTurmas,
+  TURMAS,
+  turmaOf,
+  BarraFrequencia,
+  statsPorAluno,
+  type TurmaKey,
+} from "@/components/afc-turmas";
+import { GestorConquistas } from "@/components/afc-carteira";
+import {
   DestaqueCard,
   MuralAvisos,
   TIPOS_AVISO,
@@ -74,6 +87,8 @@ type Presenca = {
   aluno_id: string;
   data: string;
   presente: boolean;
+  turma?: TurmaKey | null;
+  tipo_aula?: string | null;
 };
 
 type Exame = {
