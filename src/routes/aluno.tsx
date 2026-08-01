@@ -34,6 +34,11 @@ import { Sidebar } from "@/components/afc-sidebar";
 import { AdminSettingsModal } from "@/components/afc-modals";
 import { Button, BeltSwatch, Eyebrow, StencilHeading } from "@/components/afc-ui";
 import {
+  CarteiraGuerreiro,
+  MedalhasConcedidas,
+  useConquistas,
+} from "@/components/afc-carteira";
+import {
   DestaqueCard,
   EvolucaoAluno,
   LinhaDoTempo,
@@ -543,6 +548,17 @@ function AlunoPage() {
             </div>
 
             {tab === "perfil" && (
+              <div className="mb-4">
+                <CarteiraGuerreiro
+                  profile={profile}
+                  frequencia={frequencia}
+                  conquistas={medalhas.length + conquistas.filter((c) => c.ok).length}
+                  proximoObjetivo={objetivos.find((o) => !o.concluido)?.texto ?? null}
+                />
+              </div>
+            )}
+
+            {tab === "perfil" && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Stat label="Presenças" value={totalPresencas} />
                 <Stat label="Faltas" value={totalFaltas} />
@@ -883,7 +899,16 @@ function AlunoPage() {
             )}
 
             {tab === "conquistas" && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="space-y-4">
+                {medalhas.length > 0 && (
+                  <div className="space-y-2">
+                    <Eyebrow>Medalhas concedidas pelo Mestre</Eyebrow>
+                    <MedalhasConcedidas conquistas={medalhas} />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Eyebrow>Conquistas automáticas</Eyebrow>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {conquistas.map((c) => (
                   <Panel key={c.label} className={c.ok ? "" : "opacity-50"}>
                     <div className="text-2xl">{c.ok ? c.icon : "🔒"}</div>
@@ -901,6 +926,8 @@ function AlunoPage() {
                     </div>
                   </Panel>
                 ))}
+                  </div>
+                </div>
               </div>
             )}
 
