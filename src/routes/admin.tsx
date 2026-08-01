@@ -1740,6 +1740,8 @@ function EvolucaoTab({ alunos }: { alunos: Profile[] }) {
               </div>
             ))}
           </div>
+
+          <GestorConquistas alunoId={alunoId} />
         </>
       )}
     </div>
