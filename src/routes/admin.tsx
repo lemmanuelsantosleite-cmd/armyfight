@@ -379,6 +379,8 @@ function Dashboard({
         <Card label="Média de frequência" value={`${mediaAcademia}%`} />
       </div>
 
+      <ResumoTurmas alunos={alunos} presencas={presencas} />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <Bloco titulo="Próximos vencimentos">
           {proximosVencimentos.length === 0 ? (
