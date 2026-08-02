@@ -252,8 +252,37 @@ export function AfcProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [rows, setRows] = useState<DbTechnique[]>([]);
+  const [academia, setAcademia] = useState<Academia | null>(null);
+  const [faixas, setFaixas] = useState<AcademiaFaixa[]>([]);
   const rowsRef = useRef<DbTechnique[]>([]);
   rowsRef.current = rows;
+
+  const academiaId = (profile as (Profile & { academia_id?: string }) | null)?.academia_id ?? null;
+
+  const loadAcademia = useCallback(async (id: string | null) => {
+    if (!id) {
+      setAcademia(null);
+      setFaixas([]);
+      applyBelts([]);
+      return;
+    }
+    const [{ data: a }, { data: f }] = await Promise.all([
+      supabase.from("academias").select("*").eq("id", id).maybeSingle(),
+      supabase.from("academia_faixas").select("*").eq("academia_id", id).order("posicao"),
+    ]);
+    setAcademia((a as Academia | null) ?? null);
+    const list = (f ?? []) as AcademiaFaixa[];
+    setFaixas(list);
+    applyBelts(faixasToBelts(list));
+  }, []);
+
+  useEffect(() => {
+    void loadAcademia(academiaId);
+  }, [academiaId, loadAcademia]);
+
+  const reloadAcademia = useCallback(async () => {
+    await loadAcademia(academiaId);
+  }, [academiaId, loadAcademia]);
 
   const loadProfileAndRole = useCallback(async (uid: string) => {
     const [{ data: p }, { data: rolesData }] = await Promise.all([
@@ -474,6 +503,11 @@ export function AfcProvider({ children }: { children: ReactNode }) {
         isSuper,
         isAdmin: isMestre,
         data,
+        academia,
+        academiaId,
+        faixas,
+        belts: faixasToBelts(faixas),
+        reloadAcademia,
         signOut,
         refreshProfile,
         canAccessBelt,
