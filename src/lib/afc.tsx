@@ -29,7 +29,7 @@ export type Belt = {
   dan?: number;
 };
 
-export const BELTS: Belt[] = [
+const DEFAULT_BELTS: Belt[] = [
   { id: "b01", n: 1, name: "Faixa Branca", grad: ["#f5f3ea", "#f5f3ea"], text: "#0a0b07" },
   { id: "b02", n: 2, name: "Faixa Amarela", grad: ["#e8c530", "#e8c530"], text: "#0a0b07" },
   { id: "b03", n: 3, name: "Faixa Amarela Ponta Verde", grad: ["#e8c530", "#4b7a3a"], text: "#0a0b07" },
@@ -43,6 +43,91 @@ export const BELTS: Belt[] = [
   { id: "b11", n: 11, name: "Faixa Preta 2º Dan", grad: ["#161610", "#161610"], text: "#d1a72c", dan: 2 },
   { id: "b12", n: 12, name: "Faixa Preta", grad: ["#161610", "#161610"], text: "#d1a72c", dan: 3 },
 ];
+
+/**
+ * Faixas ativas da academia atual. É um array vivo: o provider substitui o
+ * conteúdo quando as faixas configuradas da academia são carregadas, para que
+ * qualquer componente que já importa `BELTS` passe a usar a configuração real.
+ */
+export const BELTS: Belt[] = [...DEFAULT_BELTS];
+
+export type AcademiaFaixa = {
+  id: string;
+  academia_id: string;
+  codigo: string;
+  nome: string;
+  cor1: string;
+  cor2: string;
+  cor_texto: string;
+  dan: number;
+  posicao: number;
+  requisitos: string;
+};
+
+export function faixasToBelts(faixas: AcademiaFaixa[]): Belt[] {
+  return faixas
+    .slice()
+    .sort((a, b) => a.posicao - b.posicao)
+    .map((f, i) => ({
+      id: f.codigo,
+      n: i + 1,
+      name: f.nome,
+      grad: [f.cor1, f.cor2] as [string, string],
+      text: f.cor_texto,
+      ...(f.dan > 0 ? { dan: f.dan } : {}),
+    }));
+}
+
+function applyBelts(belts: Belt[]) {
+  BELTS.splice(0, BELTS.length, ...(belts.length ? belts : DEFAULT_BELTS));
+}
+
+export type PlanoTipo = "basico" | "intermediario" | "completo";
+export type AcademiaStatus = "pendente" | "teste" | "ativa" | "suspensa" | "rejeitada";
+
+export const PLANOS: { key: PlanoTipo; label: string; preco: number; recursos: string[] }[] = [
+  {
+    key: "basico",
+    label: "Básico",
+    preco: 149.9,
+    recursos: ["Até 50 alunos", "Técnicas e faixas", "Presença e mensalidade"],
+  },
+  {
+    key: "intermediario",
+    label: "Intermediário",
+    preco: 249.9,
+    recursos: ["Até 150 alunos", "Exames e certificados", "Conquistas e mural"],
+  },
+  {
+    key: "completo",
+    label: "Completo",
+    preco: 349.9,
+    recursos: ["Alunos ilimitados", "Identidade visual própria", "Relatórios completos"],
+  },
+];
+
+export type Academia = {
+  id: string;
+  nome: string;
+  slug: string;
+  modalidade: string;
+  logo_url: string;
+  banner_url: string;
+  cor_primaria: string;
+  cor_secundaria: string;
+  endereco: string;
+  telefone: string;
+  email: string;
+  instagram: string;
+  whatsapp: string;
+  horarios: string;
+  assinatura_url: string;
+  plano: PlanoTipo;
+  status: AcademiaStatus;
+  max_alunos: number;
+  observacao: string;
+  created_at: string;
+};
 
 export type CategoryKey = "defesas" | "socos" | "chutes" | "quedas";
 
@@ -115,6 +200,11 @@ type AfcContextValue = {
   /** legacy alias kept for existing components */
   isAdmin: boolean;
   data: TechniquesData;
+  academia: Academia | null;
+  academiaId: string | null;
+  faixas: AcademiaFaixa[];
+  belts: Belt[];
+  reloadAcademia: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   canAccessBelt: (beltId: string) => boolean;
@@ -162,8 +252,37 @@ export function AfcProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [rows, setRows] = useState<DbTechnique[]>([]);
+  const [academia, setAcademia] = useState<Academia | null>(null);
+  const [faixas, setFaixas] = useState<AcademiaFaixa[]>([]);
   const rowsRef = useRef<DbTechnique[]>([]);
   rowsRef.current = rows;
+
+  const academiaId = (profile as (Profile & { academia_id?: string }) | null)?.academia_id ?? null;
+
+  const loadAcademia = useCallback(async (id: string | null) => {
+    if (!id) {
+      setAcademia(null);
+      setFaixas([]);
+      applyBelts([]);
+      return;
+    }
+    const [{ data: a }, { data: f }] = await Promise.all([
+      supabase.from("academias").select("*").eq("id", id).maybeSingle(),
+      supabase.from("academia_faixas").select("*").eq("academia_id", id).order("posicao"),
+    ]);
+    setAcademia((a as Academia | null) ?? null);
+    const list = (f ?? []) as AcademiaFaixa[];
+    setFaixas(list);
+    applyBelts(faixasToBelts(list));
+  }, []);
+
+  useEffect(() => {
+    void loadAcademia(academiaId);
+  }, [academiaId, loadAcademia]);
+
+  const reloadAcademia = useCallback(async () => {
+    await loadAcademia(academiaId);
+  }, [academiaId, loadAcademia]);
 
   const loadProfileAndRole = useCallback(async (uid: string) => {
     const [{ data: p }, { data: rolesData }] = await Promise.all([
@@ -384,6 +503,11 @@ export function AfcProvider({ children }: { children: ReactNode }) {
         isSuper,
         isAdmin: isMestre,
         data,
+        academia,
+        academiaId,
+        faixas,
+        belts: faixasToBelts(faixas),
+        reloadAcademia,
         signOut,
         refreshProfile,
         canAccessBelt,

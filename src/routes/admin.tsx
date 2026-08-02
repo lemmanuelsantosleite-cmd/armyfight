@@ -17,6 +17,7 @@ import {
   BarChart3,
   AlertTriangle,
 } from "lucide-react";
+import { Building2, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   BELTS,
@@ -52,6 +53,7 @@ import {
   type TurmaKey,
 } from "@/components/afc-turmas";
 import { GestorConquistas } from "@/components/afc-carteira";
+import { AcademiaTab, FaixasTab } from "@/components/afc-academia";
 import {
   DestaqueCard,
   MuralAvisos,
@@ -110,7 +112,9 @@ type Tab =
   | "exames"
   | "evolucao"
   | "avisos"
-  | "estatisticas";
+  | "estatisticas"
+  | "academia"
+  | "faixas";
 
 function AdminPage() {
   const { isMestre, hydrated } = useAfc();
@@ -186,6 +190,8 @@ function AdminPage() {
                   { k: "evolucao", label: "Evolução", icon: <Save size={14} /> },
                   { k: "avisos", label: "Mural & Destaque", icon: <Megaphone size={14} /> },
                   { k: "estatisticas", label: "Estatísticas", icon: <BarChart3 size={14} /> },
+                  { k: "academia", label: "Academia", icon: <Building2 size={14} /> },
+                  { k: "faixas", label: "Faixas", icon: <Layers size={14} /> },
                 ] as { k: Tab; label: string; icon: React.ReactNode }[]
               ).map((t) => {
                 const active = tab === t.k;
@@ -228,6 +234,8 @@ function AdminPage() {
             {tab === "estatisticas" && (
               <EstatisticasTab alunos={alunos} presencas={presencas} exames={exames} />
             )}
+            {tab === "academia" && <AcademiaTab />}
+            {tab === "faixas" && <FaixasTab />}
           </div>
         </main>
       </div>

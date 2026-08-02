@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Search, ShieldCheck, User, LogOut, Settings, ClipboardList } from "lucide-react";
+import { Menu, Search, ShieldCheck, User, LogOut, Settings, ClipboardList, Globe } from "lucide-react";
 import { COLORS, camoStyle, useAfc } from "@/lib/afc";
 import { Button } from "@/components/afc-ui";
 
@@ -14,7 +14,7 @@ export function Header({
   search: string;
   setSearch: (v: string) => void;
 }) {
-  const { isMestre, profile, signOut } = useAfc();
+  const { isMestre, isSuper, profile, signOut, academia } = useAfc();
   return (
     <header
       className="sticky top-0 z-40 border-b"
@@ -51,13 +51,13 @@ export function Header({
                 letterSpacing: "0.08em",
               }}
             >
-              Army Fight Club
+              {academia?.nome ?? "Army Fight Club"}
             </div>
             <div
               className="text-[10px] sm:text-xs uppercase"
               style={{ color: COLORS.brass, letterSpacing: "0.4em" }}
             >
-              Hapkido
+              {academia?.modalidade ?? "Hapkido"}
             </div>
           </div>
         </Link>
@@ -76,6 +76,11 @@ export function Header({
                 {isMestre ? `Mestre ${profile.nome}` : profile.nome}
               </span>
             </div>
+          )}
+          {isSuper && (
+            <Link to="/hub" title="Martial Hub" className="hover:brightness-125 p-1">
+              <Globe size={18} color={COLORS.brass} />
+            </Link>
           )}
           {isMestre && (
             <Link

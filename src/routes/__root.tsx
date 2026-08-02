@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AfcProvider, useAfc } from "@/lib/afc";
 import { AuthScreen, StatusScreen } from "@/components/afc-auth";
+import { ComunicadoBanner, SuporteButton } from "@/components/afc-suporte";
 
 function NotFoundComponent() {
   return (
@@ -152,7 +153,9 @@ function AuthGate() {
   }
   return (
     <>
+      <ComunicadoBanner />
       <Outlet />
+      <SuporteButton />
       <div
         style={{
           position: "fixed",
