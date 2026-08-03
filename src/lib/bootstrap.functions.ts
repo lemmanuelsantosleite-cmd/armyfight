@@ -53,19 +53,64 @@ export const ensureFixedAccount = createServerFn({ method: "POST" })
         password,
         email_confirm: true,
       });
-      // Ensure role exists (super or mestre)
-      const desiredRole = data.kind === "clovis" ? "mestre" : "super";
-      const { data: existingRoles } = await supabaseAdmin
+    }
+
+    // --- Restaura cargo, vínculo com a academia e perfil (idempotente) ---
+    const desiredRole = data.kind === "clovis" ? "mestre" : "super";
+
+    let academiaId: string | null = null;
+    if (data.kind === "clovis") {
+      const { data: ac } = await supabaseAdmin
+        .from("academias")
+        .select("id")
+        .eq("slug", "army-fight-club")
+        .maybeSingle();
+      academiaId = (ac as { id: string } | null)?.id ?? null;
+    }
+
+    const { data: existingRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("id, role, academia_id")
+      .eq("user_id", existingId);
+    const roleRow = (existingRoles ?? []).find(
+      (r: { role: string }) => r.role === desiredRole,
+    ) as { id: string; academia_id: string | null } | undefined;
+
+    if (!roleRow) {
+      await supabaseAdmin
         .from("user_roles")
-        .select("role")
-        .eq("user_id", existingId);
-      const hasRole = (existingRoles ?? []).some(
-        (r: { role: string }) => r.role === desiredRole,
-      );
-      if (!hasRole) {
+        .insert({ user_id: existingId, role: desiredRole, academia_id: academiaId });
+    } else if (academiaId && roleRow.academia_id !== academiaId) {
+      await supabaseAdmin
+        .from("user_roles")
+        .update({ academia_id: academiaId })
+        .eq("id", roleRow.id);
+    }
+
+    if (data.kind === "clovis" && academiaId) {
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("id, academia_id, status")
+        .eq("id", existingId)
+        .maybeSingle();
+
+      if (!prof) {
+        // nome_slug é único: usa um sufixo estável para não colidir com um
+        // eventual perfil antigo do Mestre já existente na academia.
+        await supabaseAdmin.from("profiles").insert({
+          id: existingId,
+          academia_id: academiaId,
+          nome,
+          nome_slug: "mestre-clovis-afc",
+          email,
+          faixa_id: "b12",
+          status: "aprovado",
+        });
+      } else {
         await supabaseAdmin
-          .from("user_roles")
-          .insert({ user_id: existingId, role: desiredRole });
+          .from("profiles")
+          .update({ academia_id: academiaId, status: "aprovado", bloqueado_inadimplencia: false })
+          .eq("id", existingId);
       }
     }
 

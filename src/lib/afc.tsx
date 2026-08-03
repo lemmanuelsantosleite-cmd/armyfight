@@ -254,10 +254,12 @@ export function AfcProvider({ children }: { children: ReactNode }) {
   const [rows, setRows] = useState<DbTechnique[]>([]);
   const [academia, setAcademia] = useState<Academia | null>(null);
   const [faixas, setFaixas] = useState<AcademiaFaixa[]>([]);
+  const [fallbackAcademiaId, setFallbackAcademiaId] = useState<string | null>(null);
   const rowsRef = useRef<DbTechnique[]>([]);
   rowsRef.current = rows;
 
-  const academiaId = (profile as (Profile & { academia_id?: string }) | null)?.academia_id ?? null;
+  const academiaId =
+    (profile as (Profile & { academia_id?: string }) | null)?.academia_id ?? fallbackAcademiaId;
 
   const loadAcademia = useCallback(async (id: string | null) => {
     if (!id) {
@@ -287,9 +289,9 @@ export function AfcProvider({ children }: { children: ReactNode }) {
   const loadProfileAndRole = useCallback(async (uid: string) => {
     const [{ data: p }, { data: rolesData }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid),
+      supabase.from("user_roles").select("role, academia_id").eq("user_id", uid),
     ]);
-    const roles = (rolesData ?? []) as { role: AppRole }[];
+    const roles = (rolesData ?? []) as { role: AppRole; academia_id: string | null }[];
     const isPrivileged =
       roles.some((r) => r.role === "super") || roles.some((r) => r.role === "mestre");
 
@@ -318,6 +320,25 @@ export function AfcProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
         prof = (p2 as Profile | null) ?? null;
       }
+    }
+
+    // Mestre/Super sem linha de perfil (contas fixas) ainda precisam de uma
+    // academia atual, senão o painel abre sem faixas nem dados.
+    if (!prof && isPrivileged) {
+      const roleAcademia = roles.find((r) => r.academia_id)?.academia_id ?? null;
+      if (roleAcademia) {
+        setFallbackAcademiaId(roleAcademia);
+      } else {
+        const { data: ac } = await supabase
+          .from("academias")
+          .select("id")
+          .order("created_at")
+          .limit(1)
+          .maybeSingle();
+        setFallbackAcademiaId((ac as { id: string } | null)?.id ?? null);
+      }
+    } else {
+      setFallbackAcademiaId(null);
     }
 
     setProfile(prof);
