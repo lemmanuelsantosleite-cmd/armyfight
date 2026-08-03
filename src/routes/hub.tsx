@@ -1,6 +1,6 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Building2, Plus, Save, Megaphone, LifeBuoy, BarChart3 } from "lucide-react";
+import { ArrowLeft, Building2, Plus, Save, Megaphone, LifeBuoy, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   COLORS,
@@ -63,6 +63,7 @@ const STATUS: AcademiaStatus[] = ["pendente", "teste", "ativa", "suspensa", "rej
 
 function HubPage() {
   const { hydrated, isSuper } = useAfc();
+  const navigate = useNavigate();
   const [aba, setAba] = useState<Aba>("academias");
   const [academias, setAcademias] = useState<Academia[]>([]);
   const [alunos, setAlunos] = useState<Contagem[]>([]);
@@ -107,6 +108,11 @@ function HubPage() {
           style={{ background: "linear-gradient(180deg, rgba(10,11,7,0.5), rgba(10,11,7,0.96))" }}
         />
         <div className="relative max-w-6xl mx-auto px-4 py-8">
+          <div className="mb-3">
+            <Button variant="ghost" onClick={() => navigate({ to: "/" })}>
+              <ArrowLeft size={14} /> Voltar
+            </Button>
+          </div>
           <Eyebrow>Plataforma</Eyebrow>
           <StencilHeading as="h1" className="text-3xl">
             Martial Hub — Comando Geral
