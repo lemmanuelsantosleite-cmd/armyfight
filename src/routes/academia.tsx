@@ -19,6 +19,23 @@ import {
 
 export const Route = createFileRoute("/academia")({
   component: Index,
+  head: () => ({
+    meta: [
+      { title: "Army Fight Club Hapkido — Biblioteca de Técnicas" },
+      {
+        name: "description",
+        content:
+          "Biblioteca digital de técnicas do Army Fight Club Hapkido: faixas com defesas pessoais, socos, chutes e quedas.",
+      },
+      { property: "og:title", content: "Army Fight Club Hapkido" },
+      {
+        property: "og:description",
+        content: "Biblioteca digital de técnicas de Hapkido organizadas por faixa.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
 });
 
 function Index() {
