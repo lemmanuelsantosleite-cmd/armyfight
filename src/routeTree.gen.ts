@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as HubRouteImport } from './routes/hub'
+import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as AlunoRouteImport } from './routes/aluno'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AcademiaRouteImport } from './routes/academia'
@@ -19,6 +20,11 @@ import { Route as BeltBeltIdRouteImport } from './routes/belt.$beltId'
 const HubRoute = HubRouteImport.update({
   id: '/hub',
   path: '/hub',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntrarRoute = EntrarRouteImport.update({
+  id: '/entrar',
+  path: '/entrar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlunoRoute = AlunoRouteImport.update({
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/academia': typeof AcademiaRoute
   '/admin': typeof AdminRoute
   '/aluno': typeof AlunoRoute
+  '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/academia': typeof AcademiaRoute
   '/admin': typeof AdminRoute
   '/aluno': typeof AlunoRoute
+  '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
@@ -69,20 +77,36 @@ export interface FileRoutesById {
   '/academia': typeof AcademiaRoute
   '/admin': typeof AdminRoute
   '/aluno': typeof AlunoRoute
+  '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/academia' | '/admin' | '/aluno' | '/hub' | '/belt/$beltId'
+  fullPaths:
+    | '/'
+    | '/academia'
+    | '/admin'
+    | '/aluno'
+    | '/entrar'
+    | '/hub'
+    | '/belt/$beltId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/academia' | '/admin' | '/aluno' | '/hub' | '/belt/$beltId'
+  to:
+    | '/'
+    | '/academia'
+    | '/admin'
+    | '/aluno'
+    | '/entrar'
+    | '/hub'
+    | '/belt/$beltId'
   id:
     | '__root__'
     | '/'
     | '/academia'
     | '/admin'
     | '/aluno'
+    | '/entrar'
     | '/hub'
     | '/belt/$beltId'
   fileRoutesById: FileRoutesById
@@ -92,6 +116,7 @@ export interface RootRouteChildren {
   AcademiaRoute: typeof AcademiaRoute
   AdminRoute: typeof AdminRoute
   AlunoRoute: typeof AlunoRoute
+  EntrarRoute: typeof EntrarRoute
   HubRoute: typeof HubRoute
   BeltBeltIdRoute: typeof BeltBeltIdRoute
 }
@@ -103,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/hub'
       fullPath: '/hub'
       preLoaderRoute: typeof HubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entrar': {
+      id: '/entrar'
+      path: '/entrar'
+      fullPath: '/entrar'
+      preLoaderRoute: typeof EntrarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aluno': {
@@ -148,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   AcademiaRoute: AcademiaRoute,
   AdminRoute: AdminRoute,
   AlunoRoute: AlunoRoute,
+  EntrarRoute: EntrarRoute,
   HubRoute: HubRoute,
   BeltBeltIdRoute: BeltBeltIdRoute,
 }
