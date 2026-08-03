@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -80,17 +81,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Army Fight Club Hapkido — Biblioteca de Técnicas" },
+      { title: "Martial Hub — Gestão para academias de artes marciais" },
       {
         name: "description",
         content:
-          "Biblioteca digital de técnicas do Army Fight Club Hapkido: 12 faixas com defesas pessoais, socos e chutes.",
+          "Martial Hub: plataforma de gestão para academias de artes marciais — alunos, financeiro, presença, graduações e certificados.",
       },
-      { name: "author", content: "Army Fight Club Hapkido" },
-      { property: "og:title", content: "Army Fight Club Hapkido" },
+      { name: "author", content: "Martial Hub" },
+      { property: "og:title", content: "Martial Hub" },
       {
         property: "og:description",
-        content: "Biblioteca digital de técnicas de Hapkido organizadas por faixa.",
+        content: "Uma plataforma. Todas as artes marciais.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -143,6 +144,10 @@ function RootComponent() {
 
 function AuthGate() {
   const { hydrated, user, profile, isMestre, isSuper } = useAfc();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isPortal = pathname === "/" || pathname === "/entrar";
+
+  if (isPortal) return <Outlet />;
   if (!hydrated) return null;
   if (!user) return <AuthScreen />;
   if (!isMestre && !isSuper) {

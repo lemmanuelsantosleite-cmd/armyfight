@@ -10,14 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as HubRouteImport } from './routes/hub'
+import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as AlunoRouteImport } from './routes/aluno'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AcademiaRouteImport } from './routes/academia'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BeltBeltIdRouteImport } from './routes/belt.$beltId'
 
 const HubRoute = HubRouteImport.update({
   id: '/hub',
   path: '/hub',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntrarRoute = EntrarRouteImport.update({
+  id: '/entrar',
+  path: '/entrar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlunoRoute = AlunoRouteImport.update({
@@ -28,6 +35,11 @@ const AlunoRoute = AlunoRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcademiaRoute = AcademiaRouteImport.update({
+  id: '/academia',
+  path: '/academia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -43,38 +55,68 @@ const BeltBeltIdRoute = BeltBeltIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/academia': typeof AcademiaRoute
   '/admin': typeof AdminRoute
   '/aluno': typeof AlunoRoute
+  '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/academia': typeof AcademiaRoute
   '/admin': typeof AdminRoute
   '/aluno': typeof AlunoRoute
+  '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/academia': typeof AcademiaRoute
   '/admin': typeof AdminRoute
   '/aluno': typeof AlunoRoute
+  '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/aluno' | '/hub' | '/belt/$beltId'
+  fullPaths:
+    | '/'
+    | '/academia'
+    | '/admin'
+    | '/aluno'
+    | '/entrar'
+    | '/hub'
+    | '/belt/$beltId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/aluno' | '/hub' | '/belt/$beltId'
-  id: '__root__' | '/' | '/admin' | '/aluno' | '/hub' | '/belt/$beltId'
+  to:
+    | '/'
+    | '/academia'
+    | '/admin'
+    | '/aluno'
+    | '/entrar'
+    | '/hub'
+    | '/belt/$beltId'
+  id:
+    | '__root__'
+    | '/'
+    | '/academia'
+    | '/admin'
+    | '/aluno'
+    | '/entrar'
+    | '/hub'
+    | '/belt/$beltId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcademiaRoute: typeof AcademiaRoute
   AdminRoute: typeof AdminRoute
   AlunoRoute: typeof AlunoRoute
+  EntrarRoute: typeof EntrarRoute
   HubRoute: typeof HubRoute
   BeltBeltIdRoute: typeof BeltBeltIdRoute
 }
@@ -86,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/hub'
       fullPath: '/hub'
       preLoaderRoute: typeof HubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entrar': {
+      id: '/entrar'
+      path: '/entrar'
+      fullPath: '/entrar'
+      preLoaderRoute: typeof EntrarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aluno': {
@@ -100,6 +149,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/academia': {
+      id: '/academia'
+      path: '/academia'
+      fullPath: '/academia'
+      preLoaderRoute: typeof AcademiaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -121,8 +177,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcademiaRoute: AcademiaRoute,
   AdminRoute: AdminRoute,
   AlunoRoute: AlunoRoute,
+  EntrarRoute: EntrarRoute,
   HubRoute: HubRoute,
   BeltBeltIdRoute: BeltBeltIdRoute,
 }
