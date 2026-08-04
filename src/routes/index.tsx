@@ -117,7 +117,10 @@ function HubPortal() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/entrar" className={hubBtnClass} style={hubBtnStyle()}>
-                Entrar <ChevronRight size={16} />
+                Entrar na Academia <ChevronRight size={16} />
+              </Link>
+              <Link to="/super" className={hubBtnClass} style={hubBtnStyle("outline")}>
+                <ShieldCheck size={16} /> Super Administrador
               </Link>
               <a href="#contato" className={hubBtnClass} style={hubBtnStyle("outline")}>
                 Criar Academia
