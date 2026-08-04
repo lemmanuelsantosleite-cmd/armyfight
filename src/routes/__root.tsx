@@ -145,7 +145,7 @@ function RootComponent() {
 function AuthGate() {
   const { hydrated, user, profile, isMestre, isSuper } = useAfc();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isPortal = pathname === "/" || pathname === "/entrar";
+  const isPortal = pathname === "/" || pathname === "/entrar" || pathname === "/super";
 
   if (isPortal) return <Outlet />;
   if (!hydrated) return null;

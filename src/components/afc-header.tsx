@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Search, ShieldCheck, User, LogOut, Settings, ClipboardList, Globe } from "lucide-react";
+import { Menu, Search, ShieldCheck, User, LogOut, Settings, ClipboardList, Globe, ArrowLeft } from "lucide-react";
 import { COLORS, camoStyle, useAfc } from "@/lib/afc";
 import { Button } from "@/components/afc-ui";
 
@@ -35,7 +35,7 @@ export function Header({
           <Menu size={22} />
         </button>
 
-        <Link to="/" className="flex items-center gap-3 min-w-0">
+        <Link to="/academia" className="flex items-center gap-3 min-w-0">
           <div
             className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-sm shrink-0"
             style={{ background: COLORS.olive, border: `1px solid ${COLORS.oliveBright}` }}
@@ -63,6 +63,17 @@ export function Header({
         </Link>
 
         <div className="flex items-center gap-2 sm:gap-3 justify-end">
+          <Link
+            to="/"
+            title="Voltar ao Martial Hub"
+            className="hover:brightness-125 p-1 flex items-center gap-1"
+            style={{ color: COLORS.paperDim }}
+          >
+            <ArrowLeft size={16} />
+            <span className="hidden md:inline text-[11px] uppercase tracking-widest">
+              Martial Hub
+            </span>
+          </Link>
           {profile && (
             <div
               className="hidden sm:flex items-center gap-2 text-sm px-2 py-1 rounded-sm"

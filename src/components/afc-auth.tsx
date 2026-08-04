@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { ShieldCheck, LogIn, UserPlus } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { ShieldCheck, LogIn, UserPlus, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { COLORS, camoStyle } from "@/lib/afc";
+import { COLORS, camoStyle, useAfc } from "@/lib/afc";
 import { Button, Field, StencilHeading, Eyebrow, inputStyle } from "@/components/afc-ui";
 import { ensureFixedAccount } from "@/lib/bootstrap.functions";
 import { solicitarCadastro } from "@/lib/alunos.functions";
@@ -10,6 +11,7 @@ import { alunoEmail, nomeSlug } from "@/lib/slug";
 type Mode = "login" | "signup";
 
 export function AuthScreen() {
+  const { academia } = useAfc();
   const [mode, setMode] = useState<Mode>("login");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
@@ -96,12 +98,20 @@ export function AuthScreen() {
             <ShieldCheck size={22} color="#f2f0e6" />
           </div>
           <div>
-            <Eyebrow>Army Fight Club</Eyebrow>
+            <Eyebrow>{academia?.nome ?? "Academia"}</Eyebrow>
             <StencilHeading as="h1" className="text-xl">
-              Hapkido
+              {academia?.modalidade ?? "Artes marciais"}
             </StencilHeading>
           </div>
         </div>
+
+        <Link
+          to="/"
+          className="mb-4 inline-flex items-center gap-1 text-[11px] uppercase tracking-widest hover:brightness-125"
+          style={{ color: COLORS.paperDim, fontFamily: "'Oswald', sans-serif" }}
+        >
+          <ArrowLeft size={13} /> Voltar ao Martial Hub
+        </Link>
 
         <div className="flex gap-1 mb-5 p-1 rounded-sm" style={{ background: COLORS.ink, border: `1px solid ${COLORS.line}` }}>
           {(["login", "signup"] as Mode[]).map((m) => (
@@ -155,7 +165,7 @@ export function AuthScreen() {
         </form>
 
         <p className="mt-5 text-[11px] text-center" style={{ color: COLORS.paperDim }}>
-          Informe apenas o nome completo. O Mestre Clóvis aprova o cadastro e cria a sua senha.
+          Informe apenas o nome completo. O Mestre da academia aprova o cadastro e cria a sua senha.
         </p>
         <div className="mt-3 text-center">
           <button

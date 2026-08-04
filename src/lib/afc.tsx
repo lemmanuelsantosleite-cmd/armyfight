@@ -261,6 +261,19 @@ export function AfcProvider({ children }: { children: ReactNode }) {
   const academiaId =
     (profile as (Profile & { academia_id?: string }) | null)?.academia_id ?? fallbackAcademiaId;
 
+  // Sem sessão, a academia atual é a selecionada no portal Martial Hub.
+  useEffect(() => {
+    if (user) return;
+    let alive = true;
+    void (async () => {
+      const { getSelectedAcademiaId } = await import("@/lib/academia-sel");
+      if (alive) setFallbackAcademiaId(getSelectedAcademiaId());
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+
   const loadAcademia = useCallback(async (id: string | null) => {
     if (!id) {
       setAcademia(null);

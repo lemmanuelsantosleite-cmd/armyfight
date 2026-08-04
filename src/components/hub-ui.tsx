@@ -157,7 +157,10 @@ function HubNav() {
             Contato
           </a>
           <Link to="/entrar" className={hubBtnClass} style={hubBtnStyle("outline")}>
-            Entrar
+            Entrar na Academia
+          </Link>
+          <Link to="/super" className={`${hubBtnClass} hidden sm:inline-flex`} style={hubBtnStyle("ghost")}>
+            Super Admin
           </Link>
           <a href="#contato" className={`${hubBtnClass} hidden sm:inline-flex`} style={hubBtnStyle()}>
             Criar Academia

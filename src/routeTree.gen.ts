@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuperRouteImport } from './routes/super'
 import { Route as HubRouteImport } from './routes/hub'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as AlunoRouteImport } from './routes/aluno'
@@ -17,6 +18,11 @@ import { Route as AcademiaRouteImport } from './routes/academia'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BeltBeltIdRouteImport } from './routes/belt.$beltId'
 
+const SuperRoute = SuperRouteImport.update({
+  id: '/super',
+  path: '/super',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HubRoute = HubRouteImport.update({
   id: '/hub',
   path: '/hub',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/aluno': typeof AlunoRoute
   '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
+  '/super': typeof SuperRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/aluno': typeof AlunoRoute
   '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
+  '/super': typeof SuperRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
 export interface FileRoutesById {
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/aluno': typeof AlunoRoute
   '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
+  '/super': typeof SuperRoute
   '/belt/$beltId': typeof BeltBeltIdRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/aluno'
     | '/entrar'
     | '/hub'
+    | '/super'
     | '/belt/$beltId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/aluno'
     | '/entrar'
     | '/hub'
+    | '/super'
     | '/belt/$beltId'
   id:
     | '__root__'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/aluno'
     | '/entrar'
     | '/hub'
+    | '/super'
     | '/belt/$beltId'
   fileRoutesById: FileRoutesById
 }
@@ -118,11 +130,19 @@ export interface RootRouteChildren {
   AlunoRoute: typeof AlunoRoute
   EntrarRoute: typeof EntrarRoute
   HubRoute: typeof HubRoute
+  SuperRoute: typeof SuperRoute
   BeltBeltIdRoute: typeof BeltBeltIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/super': {
+      id: '/super'
+      path: '/super'
+      fullPath: '/super'
+      preLoaderRoute: typeof SuperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/hub': {
       id: '/hub'
       path: '/hub'
@@ -182,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   AlunoRoute: AlunoRoute,
   EntrarRoute: EntrarRoute,
   HubRoute: HubRoute,
+  SuperRoute: SuperRoute,
   BeltBeltIdRoute: BeltBeltIdRoute,
 }
 export const routeTree = rootRouteImport
