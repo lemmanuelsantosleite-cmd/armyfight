@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Building2, ChevronLeft } from "lucide-react";
 import { HUB } from "@/lib/hub-theme";
 import { getHubPortalData } from "@/lib/hub.functions";
+import { setSelectedAcademia } from "@/lib/academia-sel";
 import { HubCard, HubShell, SectionTitle, hubBtnClass, hubBtnStyle } from "@/components/hub-ui";
 
 export const Route = createFileRoute("/entrar")({
@@ -29,6 +30,7 @@ export const Route = createFileRoute("/entrar")({
 
 function Entrar() {
   const fetchPortal = useServerFn(getHubPortalData);
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: ["hub-portal"],
     queryFn: () => fetchPortal({}),
@@ -76,9 +78,17 @@ function Entrar() {
                   </div>
                 </div>
               </div>
-              <Link to="/academia" className={`${hubBtnClass} mt-5 w-full`} style={hubBtnStyle()}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedAcademia(a.id, a.nome);
+                  void navigate({ to: "/academia" });
+                }}
+                className={`${hubBtnClass} mt-5 w-full`}
+                style={hubBtnStyle()}
+              >
                 Entrar na academia
-              </Link>
+              </button>
             </HubCard>
           ))}
           {!isLoading && academias.length === 0 && (
