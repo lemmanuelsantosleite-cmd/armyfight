@@ -35,7 +35,7 @@ export function Header({
           <Menu size={22} />
         </button>
 
-        <Link to="/" className="flex items-center gap-3 min-w-0">
+        <Link to="/academia" className="flex items-center gap-3 min-w-0">
           <div
             className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-sm shrink-0"
             style={{ background: COLORS.olive, border: `1px solid ${COLORS.oliveBright}` }}

@@ -92,7 +92,7 @@ function BeltPage() {
             />
             <div className="relative max-w-5xl mx-auto px-4 py-8 sm:py-10">
               <Link
-                to="/"
+                to="/academia"
                 className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest hover:brightness-125"
                 style={{ color: COLORS.brass, fontFamily: "'Oswald', sans-serif" }}
               >

@@ -146,7 +146,7 @@ function AdminPage() {
   }, [isMestre, load]);
 
   if (!hydrated) return null;
-  if (!isMestre) return <Navigate to="/" />;
+  if (!isMestre) return <Navigate to="/academia" />;
 
   return (
     <div className="min-h-screen" style={{ background: COLORS.ink }}>
