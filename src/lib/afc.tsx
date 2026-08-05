@@ -78,8 +78,14 @@ export function faixasToBelts(faixas: AcademiaFaixa[]): Belt[] {
     }));
 }
 
-function applyBelts(belts: Belt[]) {
-  BELTS.splice(0, BELTS.length, ...(belts.length ? belts : DEFAULT_BELTS));
+/**
+ * `hasAcademia = true` significa que já existe uma academia carregada: nesse
+ * caso as faixas são exatamente as dela (mesmo que ainda esteja vazia). O
+ * conjunto padrão só é usado quando nenhuma academia está selecionada.
+ */
+function applyBelts(belts: Belt[], hasAcademia = false) {
+  const next = belts.length ? belts : hasAcademia ? [] : DEFAULT_BELTS;
+  BELTS.splice(0, BELTS.length, ...next);
 }
 
 export type PlanoTipo = "basico" | "intermediario" | "completo";
