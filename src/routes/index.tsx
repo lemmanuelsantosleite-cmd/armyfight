@@ -66,6 +66,7 @@ const RECURSOS = [
 
 function HubPortal() {
   const fetchPortal = useServerFn(getHubPortalData);
+  const navigate = useNavigate();
   const { data } = useQuery({ queryKey: ["hub-portal"], queryFn: () => fetchPortal({}) });
   const stats = data?.stats;
   const academias = data?.academias ?? [];
@@ -124,11 +125,17 @@ function HubPortal() {
               <Link to="/super" className={hubBtnClass} style={hubBtnStyle("outline")}>
                 <ShieldCheck size={16} /> Super Administrador
               </Link>
-              <a href="#contato" className={hubBtnClass} style={hubBtnStyle("outline")}>
+              <Link to="/criar-academia" className={hubBtnClass} style={hubBtnStyle("outline")}>
                 Criar Academia
-              </a>
+              </Link>
               <a href="#recursos" className={hubBtnClass} style={hubBtnStyle("ghost")}>
                 <PlayCircle size={16} /> Conheça a plataforma
+              </a>
+              <a href="#planos" className={hubBtnClass} style={hubBtnStyle("ghost")}>
+                Planos
+              </a>
+              <a href="#suporte" className={hubBtnClass} style={hubBtnStyle("ghost")}>
+                <LifeBuoy size={16} /> Suporte
               </a>
             </div>
           </div>
@@ -205,13 +212,17 @@ function HubPortal() {
               <div className="text-xs mt-1" style={{ color: HUB.blue }}>
                 {a.modalidade}
               </div>
-              <Link
-                to="/academia"
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedAcademia(a.id, a.nome);
+                  void navigate({ to: "/academia" });
+                }}
                 className={`${hubBtnClass} mt-5 w-full`}
                 style={hubBtnStyle("outline")}
               >
                 Entrar na academia
-              </Link>
+              </button>
             </HubCard>
           ))}
           {academias.length === 0 && (
