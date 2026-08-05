@@ -291,10 +291,11 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       supabase.from("academias").select("*").eq("id", id).maybeSingle(),
       supabase.from("academia_faixas").select("*").eq("academia_id", id).order("posicao"),
     ]);
-    setAcademia((a as Academia | null) ?? null);
+    const ac = (a as Academia | null) ?? null;
+    setAcademia(ac);
     const list = (f ?? []) as AcademiaFaixa[];
     setFaixas(list);
-    applyBelts(faixasToBelts(list));
+    applyBelts(faixasToBelts(list), Boolean(ac));
   }, []);
 
   useEffect(() => {
@@ -345,17 +346,8 @@ export function AfcProvider({ children }: { children: ReactNode }) {
     // academia atual, senão o painel abre sem faixas nem dados.
     if (!prof && isPrivileged) {
       const roleAcademia = roles.find((r) => r.academia_id)?.academia_id ?? null;
-      if (roleAcademia) {
-        setFallbackAcademiaId(roleAcademia);
-      } else {
-        const { data: ac } = await supabase
-          .from("academias")
-          .select("id")
-          .order("created_at")
-          .limit(1)
-          .maybeSingle();
-        setFallbackAcademiaId((ac as { id: string } | null)?.id ?? null);
-      }
+      const { getSelectedAcademiaId } = await import("@/lib/academia-sel");
+      setFallbackAcademiaId(roleAcademia ?? getSelectedAcademiaId());
     } else {
       setFallbackAcademiaId(null);
     }
