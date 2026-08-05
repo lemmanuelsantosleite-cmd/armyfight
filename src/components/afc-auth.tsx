@@ -6,7 +6,7 @@ import { COLORS, camoStyle, useAfc } from "@/lib/afc";
 import { Button, Field, StencilHeading, Eyebrow, inputStyle } from "@/components/afc-ui";
 import { ensureFixedAccount } from "@/lib/bootstrap.functions";
 import { solicitarCadastro } from "@/lib/alunos.functions";
-import { alunoEmail, nomeSlug } from "@/lib/slug";
+import { alunoEmail, alunoEmailFor, nomeSlug } from "@/lib/slug";
 
 type Mode = "login" | "signup";
 
@@ -50,10 +50,19 @@ export function AuthScreen() {
     try {
       if (mode === "login") {
         if (nomeSlug(nome).length < 3) throw new Error("Nome ou senha inválidos.");
-        const { error } = await supabase.auth.signInWithPassword({
-          email: alunoEmail(nome),
+        // Contas novas usam e-mail interno com escopo da academia; contas
+        // antigas (antes do multiacademias) usam o formato simples.
+        let { error } = await supabase.auth.signInWithPassword({
+          email: alunoEmailFor(nome, academia?.slug),
           password,
         });
+        if (error) {
+          const legacy = await supabase.auth.signInWithPassword({
+            email: alunoEmail(nome),
+            password,
+          });
+          error = legacy.error;
+        }
         if (error) throw new Error("Nome ou senha inválidos.");
         const { data: prof } = await supabase
           .from("profiles")
@@ -66,7 +75,8 @@ export function AuthScreen() {
           setErr("Sua conta foi bloqueada pelo administrador. Entre em contato com a academia.");
         }
       } else {
-        await solicitarCadastro({ data: { nome: nome.trim() } });
+        if (!academia?.id) throw new Error("Selecione sua academia no Martial Hub antes de se cadastrar.");
+        await solicitarCadastro({ data: { nome: nome.trim(), academiaId: academia.id } });
         setNome("");
         setMsg("Seu cadastro está aguardando aprovação do Mestre.");
       }
