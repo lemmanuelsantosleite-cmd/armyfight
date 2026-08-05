@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SuperRouteImport } from './routes/super'
 import { Route as HubRouteImport } from './routes/hub'
 import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as CriarAcademiaRouteImport } from './routes/criar-academia'
 import { Route as AlunoRouteImport } from './routes/aluno'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AcademiaRouteImport } from './routes/academia'
@@ -31,6 +32,11 @@ const HubRoute = HubRouteImport.update({
 const EntrarRoute = EntrarRouteImport.update({
   id: '/entrar',
   path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CriarAcademiaRoute = CriarAcademiaRouteImport.update({
+  id: '/criar-academia',
+  path: '/criar-academia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlunoRoute = AlunoRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/academia': typeof AcademiaRoute
   '/admin': typeof AdminRoute
   '/aluno': typeof AlunoRoute
+  '/criar-academia': typeof CriarAcademiaRoute
   '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
   '/super': typeof SuperRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/academia': typeof AcademiaRoute
   '/admin': typeof AdminRoute
   '/aluno': typeof AlunoRoute
+  '/criar-academia': typeof CriarAcademiaRoute
   '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
   '/super': typeof SuperRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/academia': typeof AcademiaRoute
   '/admin': typeof AdminRoute
   '/aluno': typeof AlunoRoute
+  '/criar-academia': typeof CriarAcademiaRoute
   '/entrar': typeof EntrarRoute
   '/hub': typeof HubRoute
   '/super': typeof SuperRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/academia'
     | '/admin'
     | '/aluno'
+    | '/criar-academia'
     | '/entrar'
     | '/hub'
     | '/super'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/academia'
     | '/admin'
     | '/aluno'
+    | '/criar-academia'
     | '/entrar'
     | '/hub'
     | '/super'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/academia'
     | '/admin'
     | '/aluno'
+    | '/criar-academia'
     | '/entrar'
     | '/hub'
     | '/super'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   AcademiaRoute: typeof AcademiaRoute
   AdminRoute: typeof AdminRoute
   AlunoRoute: typeof AlunoRoute
+  CriarAcademiaRoute: typeof CriarAcademiaRoute
   EntrarRoute: typeof EntrarRoute
   HubRoute: typeof HubRoute
   SuperRoute: typeof SuperRoute
@@ -155,6 +168,13 @@ declare module '@tanstack/react-router' {
       path: '/entrar'
       fullPath: '/entrar'
       preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/criar-academia': {
+      id: '/criar-academia'
+      path: '/criar-academia'
+      fullPath: '/criar-academia'
+      preLoaderRoute: typeof CriarAcademiaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aluno': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   AcademiaRoute: AcademiaRoute,
   AdminRoute: AdminRoute,
   AlunoRoute: AlunoRoute,
+  CriarAcademiaRoute: CriarAcademiaRoute,
   EntrarRoute: EntrarRoute,
   HubRoute: HubRoute,
   SuperRoute: SuperRoute,

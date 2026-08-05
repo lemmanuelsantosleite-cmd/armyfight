@@ -1,30 +1,43 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { ALUNO_EMAIL_DOMAIN, nomeSlug } from "@/lib/slug";
+import { nomeSlug, alunoEmailFor } from "@/lib/slug";
 
 /** Solicitação de cadastro do aluno: apenas o nome completo. */
 export const solicitarCadastro = createServerFn({ method: "POST" })
   .inputValidator((input) =>
-    z.object({ nome: z.string().trim().min(3).max(120) }).parse(input),
+    z
+      .object({
+        nome: z.string().trim().min(3).max(120),
+        academiaId: z.string().uuid(),
+      })
+      .parse(input),
   )
   .handler(async ({ data }) => {
     const slug = nomeSlug(data.nome);
     if (slug.length < 3) throw new Error("Informe seu nome completo.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const { data: academia } = await supabaseAdmin
+      .from("academias")
+      .select("id, slug")
+      .eq("id", data.academiaId)
+      .maybeSingle();
+    if (!academia) throw new Error("Academia inválida. Selecione novamente sua academia.");
+
     const { data: existing } = await supabaseAdmin
       .from("profiles")
       .select("id")
+      .eq("academia_id", academia.id)
       .eq("nome_slug", slug)
       .maybeSingle();
     if (existing) throw new Error("Já existe um cadastro com esse nome completo.");
 
     const { error } = await supabaseAdmin.auth.admin.createUser({
-      email: `${slug}@${ALUNO_EMAIL_DOMAIN}`,
+      email: alunoEmailFor(data.nome, academia.slug),
       password: crypto.randomUUID() + crypto.randomUUID(),
       email_confirm: true,
-      user_metadata: { nome: data.nome.trim() },
+      user_metadata: { nome: data.nome.trim(), academia_id: academia.id },
     });
     if (error) {
       if (/already/i.test(error.message)) throw new Error("Já existe um cadastro com esse nome completo.");

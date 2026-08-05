@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -14,11 +14,13 @@ import {
   ShieldCheck,
   ChevronRight,
   PlayCircle,
+  LifeBuoy,
 } from "lucide-react";
 import bannerAsset from "@/assets/hub-banner.jpg";
 import { HUB, HUB_SLOGAN, HUB_SUB } from "@/lib/hub-theme";
 import { getHubPortalData } from "@/lib/hub.functions";
 import { PLANOS } from "@/lib/afc";
+import { setSelectedAcademia } from "@/lib/academia-sel";
 import {
   HubCard,
   HubShell,
@@ -64,6 +66,7 @@ const RECURSOS = [
 
 function HubPortal() {
   const fetchPortal = useServerFn(getHubPortalData);
+  const navigate = useNavigate();
   const { data } = useQuery({ queryKey: ["hub-portal"], queryFn: () => fetchPortal({}) });
   const stats = data?.stats;
   const academias = data?.academias ?? [];
@@ -122,11 +125,17 @@ function HubPortal() {
               <Link to="/super" className={hubBtnClass} style={hubBtnStyle("outline")}>
                 <ShieldCheck size={16} /> Super Administrador
               </Link>
-              <a href="#contato" className={hubBtnClass} style={hubBtnStyle("outline")}>
+              <Link to="/criar-academia" className={hubBtnClass} style={hubBtnStyle("outline")}>
                 Criar Academia
-              </a>
+              </Link>
               <a href="#recursos" className={hubBtnClass} style={hubBtnStyle("ghost")}>
                 <PlayCircle size={16} /> Conheça a plataforma
+              </a>
+              <a href="#planos" className={hubBtnClass} style={hubBtnStyle("ghost")}>
+                Planos
+              </a>
+              <a href="#suporte" className={hubBtnClass} style={hubBtnStyle("ghost")}>
+                <LifeBuoy size={16} /> Suporte
               </a>
             </div>
           </div>
@@ -203,13 +212,20 @@ function HubPortal() {
               <div className="text-xs mt-1" style={{ color: HUB.blue }}>
                 {a.modalidade}
               </div>
-              <Link
-                to="/academia"
+              <div className="text-xs mt-1" style={{ color: a.status === "ativa" ? "#4ADE80" : HUB.gold }}>
+                {a.status === "ativa" ? "Ativa" : "Em teste"}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedAcademia(a.id, a.nome);
+                  void navigate({ to: "/academia" });
+                }}
                 className={`${hubBtnClass} mt-5 w-full`}
                 style={hubBtnStyle("outline")}
               >
                 Entrar na academia
-              </Link>
+              </button>
             </HubCard>
           ))}
           {academias.length === 0 && (
@@ -242,9 +258,51 @@ function HubPortal() {
                   </li>
                 ))}
               </ul>
-              <a href="#contato" className={`${hubBtnClass} mt-6 w-full`} style={hubBtnStyle(i === 1 ? "primary" : "outline")}>
+              <Link
+                to="/criar-academia"
+                className={`${hubBtnClass} mt-6 w-full`}
+                style={hubBtnStyle(i === 1 ? "primary" : "outline")}
+              >
                 Quero este plano
-              </a>
+              </Link>
+            </HubCard>
+          ))}
+        </div>
+      </section>
+
+      <section id="suporte" className="max-w-7xl mx-auto px-4 py-16 sm:py-20 scroll-mt-20">
+        <SectionTitle
+          title="Suporte"
+          subtitle="Estamos com você na implantação e no dia a dia da sua academia"
+        />
+        <div className="grid gap-5 sm:grid-cols-3">
+          {[
+            {
+              title: "Central de ajuda",
+              desc: "Dentro do painel da sua academia, o botão de Suporte abre FAQ, tutoriais e abertura de chamados.",
+            },
+            {
+              title: "Atendimento humano",
+              desc: "Fale com a equipe do Martial Hub pelo e-mail suporte@martialhub.app.",
+            },
+            {
+              title: "Implantação assistida",
+              desc: "Ajudamos a configurar faixas, turmas e técnicas da sua modalidade no primeiro acesso.",
+            },
+          ].map((s) => (
+            <HubCard key={s.title}>
+              <span
+                className="grid h-11 w-11 place-items-center rounded-xl"
+                style={{ background: `${HUB.navy}33`, border: `1px solid ${HUB.blue}44` }}
+              >
+                <LifeBuoy size={20} color={HUB.blue} />
+              </span>
+              <div className="mt-4 font-semibold" style={{ color: HUB.white }}>
+                {s.title}
+              </div>
+              <p className="mt-1 text-sm" style={{ color: HUB.textDim }}>
+                {s.desc}
+              </p>
             </HubCard>
           ))}
         </div>
@@ -260,9 +318,9 @@ function HubPortal() {
               Crie sua academia agora mesmo e simplifique a gestão do seu negócio.
             </p>
           </div>
-          <a href="#contato" className={hubBtnClass} style={hubBtnStyle()}>
+          <Link to="/criar-academia" className={hubBtnClass} style={hubBtnStyle()}>
             Criar minha academia <ChevronRight size={16} />
-          </a>
+          </Link>
         </HubCard>
       </section>
     </HubShell>
