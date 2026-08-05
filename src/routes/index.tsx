@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -14,11 +14,13 @@ import {
   ShieldCheck,
   ChevronRight,
   PlayCircle,
+  LifeBuoy,
 } from "lucide-react";
 import bannerAsset from "@/assets/hub-banner.jpg";
 import { HUB, HUB_SLOGAN, HUB_SUB } from "@/lib/hub-theme";
 import { getHubPortalData } from "@/lib/hub.functions";
 import { PLANOS } from "@/lib/afc";
+import { setSelectedAcademia } from "@/lib/academia-sel";
 import {
   HubCard,
   HubShell,
