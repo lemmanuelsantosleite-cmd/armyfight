@@ -162,9 +162,13 @@ function HubNav() {
           <Link to="/super" className={`${hubBtnClass} hidden sm:inline-flex`} style={hubBtnStyle("ghost")}>
             Super Admin
           </Link>
-          <a href="#contato" className={`${hubBtnClass} hidden sm:inline-flex`} style={hubBtnStyle()}>
+          <Link
+            to="/criar-academia"
+            className={`${hubBtnClass} hidden sm:inline-flex`}
+            style={hubBtnStyle()}
+          >
             Criar Academia
-          </a>
+          </Link>
         </nav>
       </div>
     </header>
