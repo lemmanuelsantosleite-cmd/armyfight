@@ -3,16 +3,22 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Building2, Plus, Save, Megaphone, LifeBuoy, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  COLORS,
   PLANOS,
-  camoStyle,
   useAfc,
   type Academia,
   type AcademiaStatus,
   type PlanoTipo,
 } from "@/lib/afc";
-import { Button, Eyebrow, Field, StencilHeading, inputStyle } from "@/components/afc-ui";
-import { Panel } from "@/components/afc-academia";
+import { HUB } from "@/lib/hub-theme";
+import {
+  HCOLORS as COLORS,
+  HubActionButton as Button,
+  HubEyebrow as Eyebrow,
+  HubField as Field,
+  HubHeading as StencilHeading,
+  HubPanel as Panel,
+  hubInputStyle as inputStyle,
+} from "@/components/hub-admin-ui";
 
 export const Route = createFileRoute("/hub")({
   head: () => ({
@@ -100,24 +106,25 @@ function HubPage() {
   if (!isSuper) return <Navigate to="/" />;
 
   return (
-    <div className="min-h-screen" style={{ background: COLORS.ink }}>
-      <section className="relative border-b" style={{ borderColor: COLORS.line }}>
-        <div className="absolute inset-0" style={camoStyle(0.35)} />
+    <div className="min-h-screen" style={{ background: HUB.graphite, color: HUB.text }}>
+      <section className="relative border-b" style={{ borderColor: HUB.line }}>
         <div
           className="absolute inset-0"
-          style={{ background: "linear-gradient(180deg, rgba(10,11,7,0.5), rgba(10,11,7,0.96))" }}
+          style={{
+            background: `radial-gradient(900px 320px at 15% -10%, ${HUB.navy}55, transparent 70%), radial-gradient(700px 300px at 90% 0%, ${HUB.blue}22, transparent 70%)`,
+          }}
         />
-        <div className="relative max-w-6xl mx-auto px-4 py-8">
-          <div className="mb-3">
+        <div className="relative max-w-6xl mx-auto px-4 py-10">
+          <div className="mb-4">
             <Button variant="ghost" onClick={() => navigate({ to: "/" })}>
-              <ArrowLeft size={14} /> Voltar
+              <ArrowLeft size={14} /> Voltar ao Martial Hub
             </Button>
           </div>
           <Eyebrow>Plataforma</Eyebrow>
-          <StencilHeading as="h1" className="text-3xl">
-            Martial Hub — Comando Geral
+          <StencilHeading as="h1" className="text-3xl sm:text-4xl">
+            Painel do Super Administrador
           </StencilHeading>
-          <p className="text-sm mt-1" style={{ color: COLORS.paperDim }}>
+          <p className="text-sm mt-2 max-w-2xl" style={{ color: HUB.textDim }}>
             Gestão de academias, planos, estatísticas e comunicados. Dados internos de cada academia
             permanecem privados.
           </p>
@@ -126,8 +133,8 @@ function HubPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-4">
         <div
-          className="flex flex-wrap gap-1 p-1 mb-6"
-          style={{ background: COLORS.panel, border: `1px solid ${COLORS.line}` }}
+          className="flex flex-wrap gap-1 p-1.5 mb-6 rounded-2xl"
+          style={{ background: HUB.surface, border: `1px solid ${HUB.line}` }}
         >
           {(
             [
@@ -140,11 +147,11 @@ function HubPage() {
             <button
               key={t.k}
               onClick={() => setAba(t.k)}
-              className="flex-1 min-w-[130px] px-3 py-2 text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+              className="flex-1 min-w-[130px] rounded-xl px-3 py-2.5 text-xs font-semibold uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-200"
               style={{
-                background: aba === t.k ? COLORS.olive : "transparent",
-                color: aba === t.k ? "#f2f0e6" : COLORS.paperDim,
-                fontFamily: "'Oswald', sans-serif",
+                background: aba === t.k ? `linear-gradient(135deg, ${HUB.navy}, ${HUB.blue})` : "transparent",
+                color: aba === t.k ? HUB.white : HUB.textDim,
+                border: aba === t.k ? `1px solid ${HUB.blue}66` : "1px solid transparent",
               }}
             >
               {t.icon} {t.label}
@@ -373,7 +380,7 @@ function EstatisticasGlobais({
             </div>
             <div
               className="text-2xl"
-              style={{ color: COLORS.paper, fontFamily: "'Oswald', sans-serif" }}
+              style={{ color: HUB.white }}
             >
               {c.value}
             </div>
