@@ -413,7 +413,12 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       .channel("techniques-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "techniques" },
+        {
+          event: "*",
+          schema: "public",
+          table: "techniques",
+          filter: `academia_id=eq.${tenantId()}`,
+        },
         (payload) => {
           setRows((prev) => {
             if (payload.eventType === "DELETE") {

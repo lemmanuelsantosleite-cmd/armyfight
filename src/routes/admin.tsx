@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Building2, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { tenantId, withAcademia } from "@/lib/tenant";
 import {
   BELTS,
   COLORS,
@@ -130,10 +131,23 @@ function AdminPage() {
 
   const load = useCallback(async () => {
     const [a, m, p, e] = await Promise.all([
-      supabase.from("profiles").select("*").order("nome"),
-      supabase.from("mensalidades").select("*").order("vencimento", { ascending: false }),
-      supabase.from("presencas").select("*").order("data", { ascending: false }).limit(500),
-      supabase.from("exames").select("*").order("data_exame", { ascending: false }),
+      supabase.from("profiles").select("*").eq("academia_id", tenantId()).order("nome"),
+      supabase
+        .from("mensalidades")
+        .select("*")
+        .eq("academia_id", tenantId())
+        .order("vencimento", { ascending: false }),
+      supabase
+        .from("presencas")
+        .select("*")
+        .eq("academia_id", tenantId())
+        .order("data", { ascending: false })
+        .limit(500),
+      supabase
+        .from("exames")
+        .select("*")
+        .eq("academia_id", tenantId())
+        .order("data_exame", { ascending: false }),
     ]);
     if (a.data) setAlunos(a.data as Profile[]);
     if (m.data) setMensalidades(m.data as Mensalidade[]);
@@ -674,7 +688,9 @@ function AvisosTab({ alunos }: { alunos: Profile[] }) {
         .eq("id", editando.id);
       setEditando(null);
     } else {
-      await supabase.from("avisos").insert({ titulo: titulo.trim(), mensagem, tipo, fixado });
+      await supabase
+        .from("avisos")
+        .insert(withAcademia({ titulo: titulo.trim(), mensagem, tipo, fixado }));
     }
     setTitulo("");
     setMensagem("");
@@ -704,7 +720,7 @@ function AvisosTab({ alunos }: { alunos: Profile[] }) {
     await supabase
       .from("destaques")
       .upsert(
-        { mes, aluno_id: aluno.id, aluno_nome: aluno.nome, motivo, ativo: true },
+        withAcademia({ mes, aluno_id: aluno.id, aluno_nome: aluno.nome, motivo, ativo: true }),
         { onConflict: "mes" },
       );
     setMotivo("");
@@ -1081,11 +1097,13 @@ function MensalidadesTab({
   async function add(e: React.FormEvent) {
     e.preventDefault();
     if (!alunoId) return;
-    await supabase.from("mensalidades").insert({
-      aluno_id: alunoId,
-      valor: Number(valor),
-      vencimento,
-    });
+    await supabase.from("mensalidades").insert(
+      withAcademia({
+        aluno_id: alunoId,
+        valor: Number(valor),
+        vencimento,
+      }),
+    );
     onReload();
   }
   async function marcarPago(id: string) {
@@ -1233,8 +1251,16 @@ function PresencasTab({
   useEffect(() => {
     void (async () => {
       const [e, g] = await Promise.all([
-        supabase.from("exames").select("aluno_id,data_exame,status").eq("status", "agendado"),
-        supabase.from("graduacoes").select("aluno_id,data,faixa_id").order("data"),
+        supabase
+          .from("exames")
+          .select("aluno_id,data_exame,status")
+          .eq("academia_id", tenantId())
+          .eq("status", "agendado"),
+        supabase
+          .from("graduacoes")
+          .select("aluno_id,data,faixa_id")
+          .eq("academia_id", tenantId())
+          .order("data"),
       ]);
       setExames((e.data ?? []) as unknown as typeof exames);
       setGraduacoes((g.data ?? []) as unknown as typeof graduacoes);
@@ -1336,12 +1362,14 @@ function ExamesTab({
     e.preventDefault();
     const aluno = alunosMap.get(alunoId);
     if (!aluno) return;
-    await supabase.from("exames").insert({
-      aluno_id: alunoId,
-      faixa_atual: aluno.faixa_id,
-      faixa_proxima: faixaProxima,
-      data_exame: dataExame,
-    });
+    await supabase.from("exames").insert(
+      withAcademia({
+        aluno_id: alunoId,
+        faixa_atual: aluno.faixa_id,
+        faixa_proxima: faixaProxima,
+        data_exame: dataExame,
+      }),
+    );
     onReload();
   }
   async function setStatus(id: string, status: Exame["status"]) {
@@ -1556,7 +1584,12 @@ function EvolucaoTab({ alunos }: { alunos: Profile[] }) {
       return;
     }
     const [o, c] = await Promise.all([
-      supabase.from("objetivos").select("*").eq("aluno_id", alunoId).order("posicao"),
+      supabase
+        .from("objetivos")
+        .select("*")
+        .eq("academia_id", tenantId())
+        .eq("aluno_id", alunoId)
+        .order("posicao"),
       supabase
         .from("certificados")
         .select("*")
@@ -1574,11 +1607,13 @@ function EvolucaoTab({ alunos }: { alunos: Profile[] }) {
   async function addObjetivo(e: React.FormEvent) {
     e.preventDefault();
     if (!alunoId || !novoObjetivo.trim()) return;
-    await supabase.from("objetivos").insert({
-      aluno_id: alunoId,
-      texto: novoObjetivo.trim(),
-      posicao: objetivos.length,
-    });
+    await supabase.from("objetivos").insert(
+      withAcademia({
+        aluno_id: alunoId,
+        texto: novoObjetivo.trim(),
+        posicao: objetivos.length,
+      }),
+    );
     setNovoObjetivo("");
     void load();
   }
@@ -1593,13 +1628,15 @@ function EvolucaoTab({ alunos }: { alunos: Profile[] }) {
   async function addCertificado(e: React.FormEvent) {
     e.preventDefault();
     if (!alunoId) return;
-    await supabase.from("certificados").insert({
-      aluno_id: alunoId,
-      faixa_id: certFaixa,
-      data_emissao: certData,
-      mestre_nome: certMestre,
-      arquivo_url: certUrl,
-    });
+    await supabase.from("certificados").insert(
+      withAcademia({
+        aluno_id: alunoId,
+        faixa_id: certFaixa,
+        data_emissao: certData,
+        mestre_nome: certMestre,
+        arquivo_url: certUrl,
+      }),
+    );
     setCertUrl("");
     void load();
   }
