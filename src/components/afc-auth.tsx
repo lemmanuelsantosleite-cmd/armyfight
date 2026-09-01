@@ -4,8 +4,7 @@ import { ShieldCheck, LogIn, UserPlus, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { COLORS, camoStyle, useAfc } from "@/lib/afc";
 import { Button, Field, StencilHeading, Eyebrow, inputStyle } from "@/components/afc-ui";
-import { ensureFixedAccount } from "@/lib/bootstrap.functions";
-import { solicitarCadastro } from "@/lib/alunos.functions";
+import { solicitarCadastro, resolverLoginAcademia } from "@/lib/alunos.functions";
 import { alunoEmail, alunoEmailFor, nomeSlug } from "@/lib/slug";
 
 type Mode = "login" | "signup";
@@ -18,29 +17,6 @@ export function AuthScreen() {
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [showMestre, setShowMestre] = useState(false);
-  const [mestrePass, setMestrePass] = useState("");
-
-  async function loginMestreLegacy(e: React.FormEvent) {
-    e.preventDefault();
-    setErr(null);
-    setBusy(true);
-    try {
-      let kind: "clovis" | "lucas";
-      if (mestrePass === "clovis1989!!") kind = "clovis";
-      else if (mestrePass === "Lucas2011!!") kind = "lucas";
-      else throw new Error("Senha do Mestre incorreta.");
-      const { email: mEmail, password: mPass } = await ensureFixedAccount({
-        data: { kind },
-      });
-      const { error } = await supabase.auth.signInWithPassword({ email: mEmail, password: mPass });
-      if (error) throw error;
-    } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Erro ao entrar como Mestre.");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,12 +26,20 @@ export function AuthScreen() {
     try {
       if (mode === "login") {
         if (nomeSlug(nome).length < 3) throw new Error("Nome ou senha inválidos.");
-        // Contas novas usam e-mail interno com escopo da academia; contas
-        // antigas (antes do multiacademias) usam o formato simples.
-        let { error } = await supabase.auth.signInWithPassword({
-          email: alunoEmailFor(nome, academia?.slug),
-          password,
-        });
+        // O login é sempre nome completo + senha, resolvido dentro da
+        // academia ativa (academia_id). Nenhuma credencial fixa existe.
+        let email = alunoEmailFor(nome, academia?.slug);
+        if (academia?.id) {
+          try {
+            const r = await resolverLoginAcademia({
+              data: { nome: nome.trim(), academiaId: academia.id },
+            });
+            if (r?.email) email = r.email;
+          } catch {
+            /* usa o e-mail derivado do nome */
+          }
+        }
+        let { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           const legacy = await supabase.auth.signInWithPassword({
             email: alunoEmail(nome),
@@ -177,55 +161,10 @@ export function AuthScreen() {
         <p className="mt-5 text-[11px] text-center" style={{ color: COLORS.paperDim }}>
           Informe apenas o nome completo. O Mestre da academia aprova o cadastro e cria a sua senha.
         </p>
-        <div className="mt-3 text-center">
-          <button
-            type="button"
-            onClick={() => { setErr(null); setShowMestre(true); }}
-            className="text-[11px] uppercase tracking-widest hover:brightness-125"
-            style={{ color: COLORS.brass, fontFamily: "'Oswald', sans-serif" }}
-          >
-            Entrar como Mestre (senha antiga)
-          </button>
-        </div>
+        <p className="mt-2 text-[11px] text-center" style={{ color: COLORS.paperDim }}>
+          Mestres e professores entram com o próprio nome completo e senha desta academia.
+        </p>
       </div>
-
-      {/* Legacy Mestre login modal */}
-      {showMestre && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.8)" }}
-          onClick={() => setShowMestre(false)}
-        >
-          <form
-            onClick={(e) => e.stopPropagation()}
-            onSubmit={loginMestreLegacy}
-            className="w-full max-w-sm p-6"
-            style={{ background: COLORS.panel, border: `1px solid ${COLORS.brass}` }}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <ShieldCheck size={18} color={COLORS.brass} />
-              <StencilHeading as="h3" className="text-lg">Acesso do Mestre</StencilHeading>
-            </div>
-            <p className="text-xs mb-4" style={{ color: COLORS.paperDim }}>
-              Digite a senha mestra para entrar como Mestre Clóvis.
-            </p>
-            <Field label="Senha mestra">
-              <input
-                type="password"
-                style={inputStyle}
-                value={mestrePass}
-                onChange={(e) => setMestrePass(e.target.value)}
-                autoFocus
-              />
-            </Field>
-            {err && <div className="text-xs mt-2" style={{ color: "#e08070" }}>{err}</div>}
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="ghost" onClick={() => setShowMestre(false)}>Cancelar</Button>
-              <Button variant="brass" type="submit" disabled={busy}>Entrar como Mestre</Button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 }

@@ -87,3 +87,39 @@ export const rejeitarCadastro = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+/**
+ * Resolve o e-mail interno de login a partir do nome completo dentro de UMA
+ * academia. O login é sempre nome + senha, e o mesmo nome pode existir em
+ * academias diferentes — o `academia_id` é a única chave de separação.
+ * Não revela se a conta existe: quando não encontra, devolve o e-mail
+ * derivado do nome (a autenticação falhará da mesma forma).
+ */
+export const resolverLoginAcademia = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z
+      .object({ nome: z.string().trim().min(3).max(120), academiaId: z.string().uuid() })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const slug = nomeSlug(data.nome);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: academia } = await supabaseAdmin
+      .from("academias")
+      .select("id, slug")
+      .eq("id", data.academiaId)
+      .maybeSingle();
+
+    const fallback = alunoEmailFor(data.nome, academia?.slug ?? null);
+    if (!academia) return { email: fallback };
+
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("email")
+      .eq("academia_id", academia.id)
+      .eq("nome_slug", slug)
+      .maybeSingle();
+
+    return { email: (prof as { email: string } | null)?.email || fallback };
+  });
