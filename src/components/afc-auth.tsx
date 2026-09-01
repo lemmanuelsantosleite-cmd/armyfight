@@ -161,55 +161,10 @@ export function AuthScreen() {
         <p className="mt-5 text-[11px] text-center" style={{ color: COLORS.paperDim }}>
           Informe apenas o nome completo. O Mestre da academia aprova o cadastro e cria a sua senha.
         </p>
-        <div className="mt-3 text-center">
-          <button
-            type="button"
-            onClick={() => { setErr(null); setShowMestre(true); }}
-            className="text-[11px] uppercase tracking-widest hover:brightness-125"
-            style={{ color: COLORS.brass, fontFamily: "'Oswald', sans-serif" }}
-          >
-            Entrar como Mestre (senha antiga)
-          </button>
-        </div>
+        <p className="mt-2 text-[11px] text-center" style={{ color: COLORS.paperDim }}>
+          Mestres e professores entram com o próprio nome completo e senha desta academia.
+        </p>
       </div>
-
-      {/* Legacy Mestre login modal */}
-      {showMestre && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.8)" }}
-          onClick={() => setShowMestre(false)}
-        >
-          <form
-            onClick={(e) => e.stopPropagation()}
-            onSubmit={loginMestreLegacy}
-            className="w-full max-w-sm p-6"
-            style={{ background: COLORS.panel, border: `1px solid ${COLORS.brass}` }}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <ShieldCheck size={18} color={COLORS.brass} />
-              <StencilHeading as="h3" className="text-lg">Acesso do Mestre</StencilHeading>
-            </div>
-            <p className="text-xs mb-4" style={{ color: COLORS.paperDim }}>
-              Digite a senha mestra para entrar como Mestre Clóvis.
-            </p>
-            <Field label="Senha mestra">
-              <input
-                type="password"
-                style={inputStyle}
-                value={mestrePass}
-                onChange={(e) => setMestrePass(e.target.value)}
-                autoFocus
-              />
-            </Field>
-            {err && <div className="text-xs mt-2" style={{ color: "#e08070" }}>{err}</div>}
-            <div className="flex justify-end gap-2 mt-4">
-              <Button variant="ghost" onClick={() => setShowMestre(false)}>Cancelar</Button>
-              <Button variant="brass" type="submit" disabled={busy}>Entrar como Mestre</Button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 }
