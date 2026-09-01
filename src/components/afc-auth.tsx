@@ -17,29 +17,6 @@ export function AuthScreen() {
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [showMestre, setShowMestre] = useState(false);
-  const [mestrePass, setMestrePass] = useState("");
-
-  async function loginMestreLegacy(e: React.FormEvent) {
-    e.preventDefault();
-    setErr(null);
-    setBusy(true);
-    try {
-      let kind: "clovis" | "lucas";
-      if (mestrePass === "clovis1989!!") kind = "clovis";
-      else if (mestrePass === "Lucas2011!!") kind = "lucas";
-      else throw new Error("Senha do Mestre incorreta.");
-      const { email: mEmail, password: mPass } = await ensureFixedAccount({
-        data: { kind },
-      });
-      const { error } = await supabase.auth.signInWithPassword({ email: mEmail, password: mPass });
-      if (error) throw error;
-    } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Erro ao entrar como Mestre.");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,12 +26,20 @@ export function AuthScreen() {
     try {
       if (mode === "login") {
         if (nomeSlug(nome).length < 3) throw new Error("Nome ou senha inválidos.");
-        // Contas novas usam e-mail interno com escopo da academia; contas
-        // antigas (antes do multiacademias) usam o formato simples.
-        let { error } = await supabase.auth.signInWithPassword({
-          email: alunoEmailFor(nome, academia?.slug),
-          password,
-        });
+        // O login é sempre nome completo + senha, resolvido dentro da
+        // academia ativa (academia_id). Nenhuma credencial fixa existe.
+        let email = alunoEmailFor(nome, academia?.slug);
+        if (academia?.id) {
+          try {
+            const r = await resolverLoginAcademia({
+              data: { nome: nome.trim(), academiaId: academia.id },
+            });
+            if (r?.email) email = r.email;
+          } catch {
+            /* usa o e-mail derivado do nome */
+          }
+        }
+        let { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           const legacy = await supabase.auth.signInWithPassword({
             email: alunoEmail(nome),
