@@ -4,8 +4,7 @@ import { ShieldCheck, LogIn, UserPlus, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { COLORS, camoStyle, useAfc } from "@/lib/afc";
 import { Button, Field, StencilHeading, Eyebrow, inputStyle } from "@/components/afc-ui";
-import { ensureFixedAccount } from "@/lib/bootstrap.functions";
-import { solicitarCadastro } from "@/lib/alunos.functions";
+import { solicitarCadastro, resolverLoginAcademia } from "@/lib/alunos.functions";
 import { alunoEmail, alunoEmailFor, nomeSlug } from "@/lib/slug";
 
 type Mode = "login" | "signup";
