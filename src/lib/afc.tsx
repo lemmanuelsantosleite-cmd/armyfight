@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { setActiveAcademiaId, tenantId, withAcademia } from "@/lib/tenant";
 import type { User } from "@supabase/supabase-js";
 
 export const COLORS = {
@@ -298,7 +299,12 @@ export function AfcProvider({ children }: { children: ReactNode }) {
     applyBelts(faixasToBelts(list), Boolean(ac));
   }, []);
 
+  // O academia_id da sessão é a única chave de separação entre academias:
+  // fica disponível globalmente para todas as consultas do app.
+  setActiveAcademiaId(academiaId ?? null);
+
   useEffect(() => {
+    setActiveAcademiaId(academiaId ?? null);
     void loadAcademia(academiaId);
   }, [academiaId, loadAcademia]);
 
@@ -326,6 +332,7 @@ export function AfcProvider({ children }: { children: ReactNode }) {
         const meta = (u.user_metadata ?? {}) as Record<string, string | null>;
         await supabase.from("profiles").insert({
           id: u.id,
+          academia_id: (u.user_metadata?.academia_id as string | undefined) ?? tenantId(),
           nome: meta.nome || (u.email ?? "").split("@")[0],
           email: u.email ?? "",
           telefone: meta.telefone || null,
@@ -396,6 +403,7 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       const { data: t } = await supabase
         .from("techniques")
         .select("id,belt_id,categoria,titulo,descricao,video_url,imagem_url,posicao")
+        .eq("academia_id", tenantId())
         .order("posicao", { ascending: true });
       if (!cancelled) setRows((t ?? []) as DbTechnique[]);
     };
@@ -444,6 +452,7 @@ export function AfcProvider({ children }: { children: ReactNode }) {
     const { data: t } = await supabase
       .from("techniques")
       .select("id,belt_id,categoria,titulo,descricao,video_url,imagem_url,posicao")
+      .eq("academia_id", tenantId())
       .order("posicao", { ascending: true });
     setRows((t ?? []) as DbTechnique[]);
   }, []);
@@ -471,7 +480,8 @@ export function AfcProvider({ children }: { children: ReactNode }) {
     const maxPos = rowsRef.current
       .filter((r) => r.belt_id === beltId && r.categoria === cat)
       .reduce((m, r) => Math.max(m, r.posicao), -1);
-    const { error } = await supabase.from("techniques").insert({
+    const { error } = await supabase.from("techniques").insert(
+      withAcademia({
       belt_id: beltId,
       categoria: cat,
       titulo: t.title,
@@ -479,8 +489,9 @@ export function AfcProvider({ children }: { children: ReactNode }) {
       video_url: t.video,
       imagem_url: t.image,
       posicao: maxPos + 1,
-      autor_nome: profile?.nome || "Mestre Clóvis",
-    });
+      autor_nome: profile?.nome || "Mestre",
+      }),
+    );
     if (error) throw new Error(error.message);
     await reloadTechniques();
   };
