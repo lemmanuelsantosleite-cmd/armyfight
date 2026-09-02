@@ -222,7 +222,14 @@ type AfcContextValue = {
   moveTechnique: (beltId: string, cat: CategoryKey, id: string, dir: -1 | 1) => Promise<void>;
 };
 
-const AfcContext = createContext<AfcContextValue | null>(null);
+// Keep a single context instance across HMR reloads, otherwise a hot update of
+// this module creates a new context and consumers throw "must be used inside AfcProvider".
+const globalRef = globalThis as unknown as {
+  __afcContext?: React.Context<AfcContextValue | null>;
+};
+const AfcContext: React.Context<AfcContextValue | null> =
+  globalRef.__afcContext ?? createContext<AfcContextValue | null>(null);
+globalRef.__afcContext = AfcContext;
 
 type DbTechnique = {
   id: string;
