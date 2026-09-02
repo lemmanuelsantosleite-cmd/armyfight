@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Search, ShieldCheck, User, LogOut, Settings, ClipboardList, Globe, ArrowLeft } from "lucide-react";
+import { Menu, Search, ShieldCheck, User, LogOut, Settings, ClipboardList } from "lucide-react";
 import { COLORS, camoStyle, useAfc } from "@/lib/afc";
 import { Button } from "@/components/afc-ui";
 
@@ -76,11 +76,6 @@ export function Header({
                 {isMestre ? `Mestre ${profile.nome}` : profile.nome}
               </span>
             </div>
-          )}
-          {isSuper && (
-            <Link to="/hub" title="Martial Hub" className="hover:brightness-125 p-1">
-              <Globe size={18} color={COLORS.brass} />
-            </Link>
           )}
           {isMestre && (
             <Link

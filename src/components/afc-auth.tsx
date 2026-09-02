@@ -99,14 +99,6 @@ export function AuthScreen() {
           </div>
         </div>
 
-        <Link
-          to="/"
-          className="mb-4 inline-flex items-center gap-1 text-[11px] uppercase tracking-widest hover:brightness-125"
-          style={{ color: COLORS.paperDim, fontFamily: "'Oswald', sans-serif" }}
-        >
-          <ArrowLeft size={13} /> Voltar ao Martial Hub
-        </Link>
-
         <div className="flex gap-1 mb-5 p-1 rounded-sm" style={{ background: COLORS.ink, border: `1px solid ${COLORS.line}` }}>
           {(["login", "signup"] as Mode[]).map((m) => (
             <button
