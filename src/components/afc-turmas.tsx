@@ -3,6 +3,7 @@ import { CheckCircle2, XCircle, Save, AlertTriangle, Users } from "lucide-react"
 import { supabase } from "@/integrations/supabase/client";
 import { COLORS, findBelt, type Profile } from "@/lib/afc";
 import { Button, Field, inputStyle, StencilHeading, BeltSwatch } from "@/components/afc-ui";
+import { withAcademia } from "@/lib/tenant";
 
 export type TurmaKey = "infantil" | "juvenil" | "adulto";
 
@@ -179,7 +180,7 @@ export function ChamadaRapida({
   async function finalizar() {
     if (!lista.length) return;
     setSalvando(true);
-    const linhas = lista.map((a) => ({
+    const linhas = lista.map((a) => withAcademia({
       aluno_id: a.id,
       data,
       presente: rascunho[a.id] ?? doDia.get(a.id) ?? false,
