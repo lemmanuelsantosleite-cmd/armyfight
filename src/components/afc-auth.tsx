@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { ShieldCheck, LogIn, UserPlus, ArrowLeft } from "lucide-react";
+import { ShieldCheck, LogIn, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { COLORS, camoStyle, useAfc } from "@/lib/afc";
 import { Button, Field, StencilHeading, Eyebrow, inputStyle } from "@/components/afc-ui";

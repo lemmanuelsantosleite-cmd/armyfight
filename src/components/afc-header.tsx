@@ -14,7 +14,7 @@ export function Header({
   search: string;
   setSearch: (v: string) => void;
 }) {
-  const { isMestre, isSuper, profile, signOut, academia } = useAfc();
+  const { isMestre, profile, signOut, academia } = useAfc();
   return (
     <header
       className="sticky top-0 z-40 border-b"
