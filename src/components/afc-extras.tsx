@@ -3,6 +3,7 @@ import { Megaphone, Trophy, Sparkles, Flag, Award, FileText, Medal } from "lucid
 import { supabase } from "@/integrations/supabase/client";
 import { BELTS, CATEGORIES, COLORS, findBelt } from "@/lib/afc";
 import { Eyebrow, StencilHeading, BeltSwatch } from "@/components/afc-ui";
+import { tenantId } from "@/lib/tenant";
 
 /* ------------------------------------------------------------------ */
 /* Tipos                                                               */
@@ -66,6 +67,7 @@ export function useAvisos() {
     const { data } = await supabase
       .from("avisos")
       .select("*")
+      .eq("academia_id", tenantId())
       .order("fixado", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(50);
@@ -93,6 +95,7 @@ export function useDestaque() {
     const { data } = await supabase
       .from("destaques")
       .select("*")
+      .eq("academia_id", tenantId())
       .eq("ativo", true)
       .order("mes", { ascending: false })
       .limit(1);
@@ -125,6 +128,7 @@ export function useTecnicasRecentes(limit = 6) {
     const { data } = await supabase
       .from("techniques")
       .select("id,belt_id,categoria,titulo,descricao,video_url,imagem_url,autor_nome,created_at")
+      .eq("academia_id", tenantId())
       .order("created_at", { ascending: false })
       .limit(limit);
     setTecnicas((data ?? []) as unknown as TecnicaRecente[]);

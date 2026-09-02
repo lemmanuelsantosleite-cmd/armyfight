@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { COLORS, findBelt, type Profile } from "@/lib/afc";
 import { Button, Field, inputStyle, StencilHeading, BeltSwatch } from "@/components/afc-ui";
 import { BarraFrequencia, TURMAS, turmaOf } from "@/components/afc-turmas";
+import { tenantId, withAcademia } from "@/lib/tenant";
 import logoAsset from "@/assets/afc-logo.png.asset.json";
 
 export type Conquista = {
@@ -28,6 +29,7 @@ export function useConquistas(alunoId?: string | null) {
     const { data } = await supabase
       .from("conquistas")
       .select("*")
+      .eq("academia_id", tenantId())
       .eq("aluno_id", alunoId)
       .order("data", { ascending: false });
     setConquistas((data ?? []) as unknown as Conquista[]);
@@ -248,7 +250,7 @@ export function GestorConquistas({ alunoId }: { alunoId: string }) {
     if (!alunoId || !titulo.trim()) return;
     await supabase
       .from("conquistas")
-      .insert({ aluno_id: alunoId, titulo: titulo.trim(), icone, descricao: descricao.trim() || null });
+      .insert(withAcademia({ aluno_id: alunoId, titulo: titulo.trim(), icone, descricao: descricao.trim() || null }));
     setTitulo("");
     setDescricao("");
     void reload();
