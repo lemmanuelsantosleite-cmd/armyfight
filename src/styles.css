@@ -168,3 +168,8 @@
     animation: none;
   }
 }
+
+/* Oculta o badge do Lovable nas publicações */
+#lovable-badge {
+  display: none !important;
+}
