@@ -53,10 +53,9 @@ export function SuporteButton() {
       <button
         onClick={() => setOpen(true)}
         title="Suporte Martial Hub"
-        className="fixed flex items-center gap-2 px-3 py-2 hover:brightness-125 active:scale-95"
+        className="afc-support-trigger fixed flex items-center gap-2 px-3 py-2 hover:brightness-125 active:scale-95"
         style={{
           left: 12,
-          bottom: 12,
           zIndex: 45,
           background: COLORS.panel,
           border: `1px solid ${COLORS.olive}`,

@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AfcProvider, useAfc } from "@/lib/afc";
 import { AuthScreen, StatusScreen } from "@/components/afc-auth";
 import { ComunicadoBanner, SuporteButton } from "@/components/afc-suporte";
+import { AfcFloatingMenu } from "@/components/afc-floating-menu";
 
 function NotFoundComponent() {
   return (
@@ -164,7 +165,10 @@ function AuthGate() {
   return (
     <>
       <ComunicadoBanner />
-      <Outlet />
+      <div className={pathname === "/academia" || pathname === "/admin" || pathname === "/aluno" || pathname.startsWith("/belt/") ? "afc-floating-content" : undefined}>
+        <Outlet />
+        <AfcFloatingMenu />
+      </div>
       <SuporteButton />
       <div
         style={{

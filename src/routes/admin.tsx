@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { z } from "zod";
 import {
   Users,
   UserCheck,
@@ -66,10 +67,15 @@ import {
 } from "@/components/afc-extras";
 
 export const Route = createFileRoute("/admin")({
+  validateSearch: z.object({ tab: z.enum(["dashboard", "alunos", "mensalidades", "presencas", "exames", "evolucao", "avisos", "estatisticas", "academia", "faixas"]).catch("dashboard").default("dashboard") }),
   head: () => ({
     meta: [
       { title: "Painel do Mestre — Army Fight Club Hapkido" },
       { name: "description", content: "Painel administrativo da academia." },
+      { property: "og:title", content: "Painel do Mestre — Army Fight Club Hapkido" },
+      { property: "og:description", content: "Gestão de alunos, presença, mensalidades e graduações da Army Fight Club Hapkido." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AdminPage,
@@ -121,7 +127,9 @@ function AdminPage() {
   const { isMestre, hydrated } = useAfc();
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const setTab = (next: Tab) => void navigate({ search: { tab: next }, resetScroll: false });
   const [search, setSearch] = useState("");
 
   const [alunos, setAlunos] = useState<Profile[]>([]);
