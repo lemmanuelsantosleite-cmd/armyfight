@@ -1,0 +1,3 @@
+- [ ] Add military floating menu with liquid active transitions.
+- [ ] Connect student/master shortcuts to existing screens and reserve footer space.
+- [ ] Verify navigation and non-overlap on desktop and mobile.
