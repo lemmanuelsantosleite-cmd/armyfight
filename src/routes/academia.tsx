@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/afc-sidebar";
 import { AdminSettingsModal } from "@/components/afc-modals";
 import { BeltSwatch, Eyebrow, StencilHeading } from "@/components/afc-ui";
 import { Lock } from "lucide-react";
+import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import {
   DestaqueCard,
   MuralAvisos,
@@ -144,7 +145,8 @@ function Index() {
                       "linear-gradient(180deg, rgba(10,11,7,0.4) 0%, rgba(10,11,7,0.96) 100%)",
                   }}
                 />
-                <div className="relative max-w-7xl mx-auto px-4 py-14 sm:py-20 animate-fade-in">
+                <ContainerScroll appearance="plain" className="relative">
+                <div className="relative max-w-7xl mx-auto px-4 py-14 sm:py-20">
                   <div
                     className="inline-block mb-6 p-2 animate-scale-in"
                     style={{
@@ -203,6 +205,7 @@ function Index() {
                     Iniciar jornada <ChevronRight size={16} />
                   </a>
                 </div>
+                </ContainerScroll>
               </section>
 
               {(destaque || avisos.length > 0) && (

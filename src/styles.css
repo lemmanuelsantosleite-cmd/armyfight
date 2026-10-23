@@ -173,3 +173,24 @@
 #lovable-badge {
   display: none !important;
 }
+
+/* Scroll surfaces follow the existing Army Fight Club identity. */
+:root {
+  --afc-scroll-panel: oklch(0.194 0.013 115);
+  --afc-scroll-border: oklch(0.287 0.021 115);
+  --afc-scroll-shadow: 0 18px 40px oklch(0 0 0 / 35%);
+}
+
+.afc-scroll-container {
+  perspective: 1000px;
+}
+
+.afc-scroll-surface {
+  transform-origin: center top;
+}
+
+.afc-scroll-frame {
+  background: var(--afc-scroll-panel);
+  border-color: var(--afc-scroll-border);
+  box-shadow: var(--afc-scroll-shadow);
+}

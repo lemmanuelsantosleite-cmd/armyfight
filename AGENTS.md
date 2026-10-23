@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep scroll animation primitives in `src/components/ui/container-scroll-animation.tsx`; use the plain appearance on the academy opening to preserve its unframed identity, and respect reduced-motion preferences.
