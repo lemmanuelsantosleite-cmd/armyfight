@@ -20,7 +20,7 @@ export function FloatingMenu({ items }: { items: FloatingMenuItem[] }) {
     <nav aria-label="Atalhos da academia" className="afc-floating-menu" onMouseLeave={() => setHovered(null)}>
       <ul className="flex w-full items-center gap-1">
         {items.map((item) => (
-          <li key={item.id} className="relative min-w-0 flex-1" onMouseEnter={() => setHovered(item.id)}>
+          <li key={item.id} className="relative min-w-0 flex-1" onMouseEnter={() => setHovered(item.id)} onFocus={() => setHovered(item.id)} onBlur={() => setHovered(null)}>
             {highlighted === item.id && (
               <motion.div
                 layoutId={`${id}-liquid`}

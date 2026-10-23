@@ -212,7 +212,7 @@
   bottom: calc(24px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
-  z-index: 40;
+  z-index: 30;
   width: min(480px, calc(100% - 24px));
   padding: 6px;
   border: 1px solid var(--afc-menu-border);
