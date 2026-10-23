@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { z } from "zod";
 import {
   User as UserIcon,
   BookOpen,
@@ -49,6 +50,7 @@ import {
 } from "@/components/afc-extras";
 
 export const Route = createFileRoute("/aluno")({
+  validateSearch: z.object({ tab: z.enum(["perfil", "evolucao", "jornada", "tecnicas", "graduacao", "frequencia", "mensalidade", "exames", "objetivos", "certificados", "conquistas", "mural", "notificacoes"]).catch("perfil").default("perfil") }),
   head: () => ({
     meta: [
       { title: "Painel do Aluno — Army Fight Club Hapkido" },
@@ -62,6 +64,8 @@ export const Route = createFileRoute("/aluno")({
         property: "og:description",
         content: "Sua evolução no Hapkido: faixas, presenças, exames e certificados.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: AlunoPage,
@@ -208,7 +212,9 @@ function AlunoPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<Tab>("perfil");
+  const { tab } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const setTab = (next: Tab) => void navigate({ search: { tab: next }, resetScroll: false });
 
   const [mensalidades, setMensalidades] = useState<Mensalidade[]>([]);
   const [presencas, setPresencas] = useState<Presenca[]>([]);

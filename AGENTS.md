@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Keep scroll animation primitives in `src/components/ui/container-scroll-animation.tsx`; use the plain appearance on the academy opening to preserve its unframed identity, and respect reduced-motion preferences.
+- Reuse `FloatingMenu` through the academy shell and keep panel tabs in validated route search parameters so role-specific links, browser history, and existing tabs stay synchronized; reserve footer clearance and keep navigation below overlays.
